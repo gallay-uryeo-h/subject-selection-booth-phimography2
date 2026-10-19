@@ -442,14 +442,20 @@
       transform: translateY(-1px);
     }
 
-    /* 다이렉트 카드 그리드 */
+    /* 다이렉트 카드 그리드 (컴팩트 3열 레이아웃) */
     .stream-card-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 768px) {
+      .stream-card-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
       .stream-card-grid {
         grid-template-columns: 1fr;
       }
@@ -457,27 +463,48 @@
 
     .stream-select-card {
       background: #FFFFFF;
-      border: 2px solid var(--color-border-subtle);
-      border-radius: 10px;
-      padding: 1.15rem 1.25rem;
+      border: 1.5px solid var(--color-border-subtle);
+      border-radius: 8px;
+      padding: 0.75rem 0.85rem;
       cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      min-height: 98px;
     }
 
     .stream-select-card:hover {
       border-color: var(--color-oxford-navy);
       background: var(--color-oxford-navy-subtle);
       transform: translateY(-2px);
-      box-shadow: 0 8px 18px rgba(11, 37, 69, 0.08);
+      box-shadow: 0 4px 12px rgba(11, 37, 69, 0.08);
     }
 
     .stream-select-card.selected {
       border-color: var(--color-oxford-navy);
+      border-width: 2px;
       background: var(--color-oxford-navy-subtle);
-      box-shadow: 0 0 0 1px var(--color-oxford-navy), 0 8px 18px rgba(11, 37, 69, 0.1);
+      box-shadow: 0 0 0 1px var(--color-oxford-navy), 0 4px 14px rgba(11, 37, 69, 0.12);
+    }
+
+    /* Gemini 관심사 찾기 위젯 */
+    .gemini-interest-box {
+      background: linear-gradient(135deg, #FEF3C7 0%, #FEE2E2 100%);
+      border: 1.5px solid #F59E0B;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.15rem;
+      box-shadow: 0 2px 8px rgba(217, 119, 6, 0.08);
+    }
+
+    .gemini-suggest-result {
+      background: #FFFFFF;
+      border: 1.5px solid #0B2545;
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      margin-top: 0.85rem;
+      animation: fadeIn 0.2s ease-out;
     }
 
     .stream-action-btn {
@@ -1758,6 +1785,122 @@
       window.streamCompleteStep(2);
     };
 
+    window.setInterestInput = (text) => {
+      const input = document.getElementById('gemini-interest-input');
+      if (input) {
+        input.value = text;
+        window.handleGeminiInterestRecommend();
+      }
+    };
+
+    window.handleGeminiInterestRecommend = async () => {
+      const input = document.getElementById('gemini-interest-input');
+      const userText = input ? input.value.trim() : '';
+      if (!userText) {
+        alert('평소 좋아하는 과목이나 취미, 관심 분야를 입력해 주세요!');
+        if (input) input.focus();
+        return;
+      }
+
+      const btn = document.getElementById('btn-gemini-interest-submit');
+      const resultBox = document.getElementById('gemini-interest-result');
+      const apiKey = localStorage.getItem('GEMINI_API_KEY') || '';
+      const modelName = 'gemini-3.5-flash';
+
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ AI 분석 중...';
+      }
+
+      try {
+        let recCatId = '';
+        let recReason = '';
+
+        if (apiKey) {
+          const prompt = `
+학생의 평소 관심사/취미/희망 활동: "${userText}"
+아래 6대 진로 계열 중 가장 적합한 1개를 선택하고 설득력 있는 추천 이유를 1~2문장으로 작성하세요.
+계열 목록:
+- HUMANITIES (인문·어문·통번역 계열)
+- SOCIAL_COMMERCE (사회과학·상경·경영·로스쿨 계열)
+- NATURAL_SCIENCE (자연과학·순수기초학문 계열)
+- ENGINEERING_IT (공학·IT·인공지능 계열)
+- MEDICINE_BIO (의약·바이오·보건 계열)
+- EDUCATION (교육·사범 계열)
+
+반드시 아래 JSON 형식으로만 응답하세요:
+{"catId": "계열ID", "reason": "추천 이유 1~2문장"}
+`;
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.2, responseMimeType: "application/json" }
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const parsed = JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text);
+            recCatId = parsed.catId;
+            recReason = parsed.reason;
+          }
+        }
+
+        if (!recReason) {
+          // 스마트 룰베이스 오프라인 Fallback
+          await new Promise(r => setTimeout(r, 350));
+          const text = userText.toLowerCase();
+          if (/게임|컴퓨터|코딩|소프트웨어|인공지능|ai|기계|로봇|it|전기|전자|프로그래밍|개발/.test(text)) {
+            recCatId = 'ENGINEERING_IT';
+            recReason = "소프트웨어 개발과 공학적 문제 해결에 대한 관심은 영문 API 및 최신 기술 명세서 독해에 최적화된 공학·IT 계열과 가장 잘 부합합니다.";
+          } else if (/병원|의사|생물|바이오|약|간호|의학|유전자|치료|보건|임상/.test(text)) {
+            recCatId = 'MEDICINE_BIO';
+            recReason = "생명과학과 인체 보건에 대한 호기심은 최신 국제 의학 저널 원서 독해 및 생명윤리 탐구와 직결됩니다.";
+          } else if (/외국어|영어|소설|문학|번역|인문|언어|문화|철학|통역|콘텐츠/.test(text)) {
+            recCatId = 'HUMANITIES';
+            recReason = "언어와 문학적 텍스트에 대한 감수성은 인문·어문 계열의 문화 간 담화 비판 및 번역 실무 역량과 가장 높은 시너지를 냅니다.";
+          } else if (/경영|경제|돈|투자|비즈니스|마케팅|변호사|법|로스쿨|사회|정치|외교/.test(text)) {
+            recCatId = 'SOCIAL_COMMERCE';
+            recReason = "사회 구조와 경제 메커니즘에 대한 관심은 사회과학·상경 계열의 영문 정책 분석 및 논증 역량과 잘 맞습니다.";
+          } else if (/선생님|교사|가르치|교육|학교|아이|상담|심리|학생/.test(text)) {
+            recCatId = 'EDUCATION';
+            recReason = "타인에 대한 공감과 교수학습에 대한 애정은 교육·사범 계열의 의사소통 중심 영어과 역량을 키우는 훌륭한 토대입니다.";
+          } else {
+            recCatId = 'NATURAL_SCIENCE';
+            recReason = "자연 현상의 기본 원리를 탐구하려는 순수 학문적 열정은 자연과학 계열의 학술 논문 초록 분석에 큰 강점이 됩니다.";
+          }
+        }
+
+        const catObj = CAREER_CATEGORIES.find(c => c.id === recCatId) || CAREER_CATEGORIES[0];
+        if (resultBox) {
+          resultBox.style.display = 'block';
+          resultBox.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-size:0.75rem; font-weight:700; color:#B45309;">🎯 Gemini 3.5 Flash 진단 추천:</span>
+              <span class="academic-badge badge-suneung">${catObj.name.split(' ')[0]}</span>
+            </div>
+            <div style="font-weight:700; font-size:0.95rem; color:#0B2545; margin-bottom:4px;">${catObj.name}</div>
+            <p style="font-size:0.78rem; color:#475569; line-height:1.45; margin-bottom:8px;">${recReason}</p>
+            <button class="academic-btn btn-primary" onclick="window.handleStreamCategorySelect('${catObj.id}')" 
+              style="width:100%; padding:0.6rem; font-size:0.85rem; font-weight:700; background:#0B2545; border:1.5px solid #D97706;">
+              👉 이 추천 계열 (${catObj.name.split(' ')[0]})로 바로 선택하기
+            </button>
+          `;
+        }
+
+      } catch (err) {
+        alert('AI 분석 중 일시적 오류가 발생했습니다. 아래 카드에서 직접 터치해 주세요.');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '🤖 AI 추천받기';
+        }
+      }
+    };
+
     window.handleStreamQuickCareer = (keyword) => {
       const input = document.getElementById('stream-career-input');
       if (input) input.value = keyword;
@@ -1857,21 +2000,52 @@
         } else {
           html += `
             <div id="stream-step-2" class="stream-step-card active-question animate-reveal">
-              <div class="stream-card-body">
+              <div class="stream-card-body" style="padding: 1.5rem 1.75rem;">
                 <div class="stream-step-badge">STEP 02 • CAREER FIELD</div>
-                <h2 class="stream-question-title">${state.profile.name || '학생'}님, 어떤 진로 계열에 가장 관심이 있나요?</h2>
-                <p class="stream-question-desc">계열을 터치하시면 2022 개정 3개년 영어 맞춤 과목 편제가 1초 만에 자동 배치됩니다.</p>
+                <h2 class="stream-question-title" style="font-size: 1.4rem;">${state.profile.name || '학생'}님, 어떤 진로 계열에 가장 관심이 있나요?</h2>
+                <p class="stream-question-desc" style="margin-bottom: 1rem; font-size: 0.85rem;">카드를 터치하시면 2022 개정 3개년 영어 맞춤 과목이 자동으로 배치됩니다.</p>
+                
+                <!-- Gemini AI 관심사 계열 찾기 위젯 -->
+                <div class="gemini-interest-box">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-size:0.8rem; font-weight:700; color:#B45309; display:flex; align-items:center; gap:4px;">
+                      ✨ 잘 모르겠나요? <strong>Gemini 3.5 Flash</strong>로 내 관심사 계열 찾기
+                    </span>
+                    <span style="font-size:0.7rem; color:#78350F; background:#FFF; padding:2px 8px; border-radius:9999px; font-weight:600;">실시간 AI 진단</span>
+                  </div>
+                  
+                  <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+                    <span class="stream-tag-chip" style="font-size:0.75rem; padding:3px 10px;" onclick="window.setInterestInput('게임이랑 컴퓨터 프로그램, 앱 개발에 관심이 많아요')">🎮 게임·앱 개발</span>
+                    <span class="stream-tag-chip" style="font-size:0.75rem; padding:3px 10px;" onclick="window.setInterestInput('생물 실험 좋아하고 신약 개발이나 의사가 꿈이에요')">🔬 바이오·신약·의학</span>
+                    <span class="stream-tag-chip" style="font-size:0.75rem; padding:3px 10px;" onclick="window.setInterestInput('외국어 배우는 게 즐겁고 소설 번역이나 글로벌 마케팅에 관심 있어요')">📚 외국어·통번역</span>
+                    <span class="stream-tag-chip" style="font-size:0.75rem; padding:3px 10px;" onclick="window.setInterestInput('사회 정의나 법률, 토론과 미디어 시사 분석을 좋아해요')">⚖️ 로스쿨·사회과학</span>
+                    <span class="stream-tag-chip" style="font-size:0.75rem; padding:3px 10px;" onclick="window.setInterestInput('선생님이 되어 학생들을 가르치거나 교육 프로그램 기획하고 싶어요')">🧑‍🏫 교육·사범</span>
+                  </div>
+
+                  <div style="display:flex; gap:6px;">
+                    <input type="text" id="gemini-interest-input" placeholder="예: 평소 수학 퍼즐 푸는 걸 좋아하고 인공지능에 관심이 많아요" 
+                      style="flex:1; padding:0.6rem 0.85rem; border:1.5px solid #F59E0B; border-radius:6px; font-size:0.85rem; background:#FFF;"
+                      onkeydown="if(event.key==='Enter') window.handleGeminiInterestRecommend();">
+                    <button id="btn-gemini-interest-submit" onclick="window.handleGeminiInterestRecommend()" class="academic-btn btn-primary" style="background:#0B2545; border:1px solid #D97706; font-size:0.8rem; font-weight:700; white-space:nowrap; padding:0.6rem 1rem;">
+                      🤖 AI 추천받기
+                    </button>
+                  </div>
+
+                  <div id="gemini-interest-result" class="gemini-suggest-result" style="display:none;"></div>
+                </div>
+
+                <!-- 컴팩트 3열 카드 그리드 -->
                 <div class="stream-card-grid">
                   ${CAREER_CATEGORIES.map(cat => {
                     const isSel = cat.id === state.profile.careerCategoryId;
                     return `
                       <div class="stream-select-card ${isSel ? 'selected' : ''}" onclick="window.handleStreamCategorySelect('${cat.id}')">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                          <span class="academic-badge ${isSel ? 'badge-suneung' : 'badge-career'}">${cat.name.split(' ')[0]}</span>
-                          ${isSel ? '<span style="color:#0B2545; font-weight:700; font-size:0.85rem;">✓ 선택됨</span>' : '<span style="color:#64748B; font-size:0.8rem;">터치하여 선택 →</span>'}
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                          <span class="academic-badge ${isSel ? 'badge-suneung' : 'badge-career'}" style="font-size:0.68rem; padding:2px 5px;">${cat.name.split(' ')[0]}</span>
+                          ${isSel ? '<span style="color:#0B2545; font-weight:700; font-size:0.75rem;">✓ 선택됨</span>' : '<span style="color:#94A3B8; font-size:0.72rem;">선택 →</span>'}
                         </div>
-                        <h4 style="font-size:1.05rem; font-weight:700; color:#0B2545; margin-bottom:4px;">${cat.name}</h4>
-                        <p style="font-size:0.8rem; color:#475569; line-height:1.4;">${cat.description}</p>
+                        <h4 style="font-size:0.925rem; font-weight:700; color:#0B2545; margin-bottom:2px; line-height:1.25;">${cat.name}</h4>
+                        <p style="font-size:0.725rem; color:#64748B; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${cat.description}</p>
                       </div>
                     `;
                   }).join('')}
