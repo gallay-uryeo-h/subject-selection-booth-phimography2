@@ -1,226 +1,147 @@
 /**
  * modules/m08-wizard-funnel/wizard-view.js
  * 
- * 다이렉트 자동차보험 가입 방식의 5단계 인터랙티브 위저드 뷰 컴포넌트
+ * 다이렉트 자동차보험 스타일 '하나씩 스르륵 나타나는' 점진적 스트림 질문 노출 UI 모듈
  */
 
-import { roadmapStore } from '../../core/store.js';
-import { CAREER_CATEGORIES } from '../../core/types.js';
-import { curriculumEngine } from '../m02-curriculum/curriculum-engine.js';
-import { ragMatcher } from '../m03-textbook-rag/rag-matcher.js';
-import { academicAiModule } from '../m05-academic-ai/gemini-client.js';
-import { photocardBuilder } from '../m06-photocard/photocard-builder.js';
-
-export class WizardView {
-  constructor(containerElement) {
+export class StreamWizardView {
+  constructor(containerElement, store, curriculumData, careerCategories) {
     this.container = containerElement;
-    this.currentStep = 1;
-    this.totalSteps = 5;
+    this.store = store;
+    this.curriculumData = curriculumData;
+    this.careerCategories = careerCategories;
+    
+    this.streamCurrentStep = 1;
+    this.streamEditingStep = null;
+
+    this.careerKeywordsMap = {
+      'humanities': ['국제통상 전문가', '외교관', '글로벌 마케터', '동시통역사', '문화콘텐츠 기획자'],
+      'social': ['로스쿨 변호사', '공인회계사(CPA)', '투자은행 애널리스트', '정책 연구원', '빅데이터 경영컨설턴트'],
+      'nature': ['생명공학 연구원', '양자컴퓨팅 물리학자', '천문우주 데이터분석가', '신소재 연구원', '기후변화 환경과학자'],
+      'engineering': ['인공지능(AI) 연구원', '자율주행 소프트웨어 엔지니어', '반도체 공정설계사', '로봇 공학자', '정보보안 전문가'],
+      'medicine': ['신약 개발 바이오 연구원', '임상 의사', '정밀의료 유전체 분석가', '약학 연구원', '디지털 헬스케어 기획자'],
+      'education': ['중등 영어 교사', '교육공학 AI 튜터 개발자', '국제기구(UNESCO) 교육 전문가', '언어인지 발달연구원']
+    };
+
+    this.init();
   }
 
-  /**
-   * 위저드 렌더링
-   */
+  init() {
+    this.render();
+    this.store.subscribe(() => this.render());
+  }
+
+  editStep(step) {
+    this.streamEditingStep = step;
+    this.render();
+    setTimeout(() => {
+      const el = document.getElementById(`stream-step-${step}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  }
+
+  completeStep(step) {
+    if (this.streamEditingStep === step) {
+      this.streamEditingStep = null;
+    } else if (this.streamCurrentStep === step && this.streamCurrentStep < 6) {
+      this.streamCurrentStep++;
+    }
+    this.render();
+    setTimeout(() => {
+      const targetStep = this.streamEditingStep || this.streamCurrentStep;
+      const el = document.getElementById(`stream-step-${targetStep}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 80);
+  }
+
   render() {
     if (!this.container) return;
+    const state = this.store.getState();
+    const currentActive = this.streamEditingStep || this.streamCurrentStep;
 
-    const state = roadmapStore.getState();
-    const progressPercent = (this.currentStep / this.totalSteps) * 100;
-
-    const stepTitles = [
-      "기본 정보",
-      "진로 계열",
-      "3개년 과목",
-      "교과서 & 세특",
-      "네컷사진 & 완성"
-    ];
-
-    this.container.innerHTML = `
-      <div class="wizard-funnel-container">
-        
-        <!-- Progress Header -->
-        <div class="wizard-progress-header">
-          <div class="wizard-step-indicator">
-            <span class="active-step-title">STEP 0${this.currentStep}. ${stepTitles[this.currentStep - 1]}</span>
-            <span>${this.currentStep} / ${this.totalSteps}</span>
-          </div>
-          <div class="wizard-progress-track">
-            <div class="wizard-progress-bar" style="width: ${progressPercent}%;"></div>
-          </div>
+    let html = `
+      <div class="stream-funnel-wrapper">
+        <div style="text-align:center; margin-bottom:0.5rem;">
+          <span style="font-size:0.75rem; font-weight:700; color:#D97706; text-transform:uppercase; letter-spacing:0.08em; background:#FEF3C7; padding:4px 12px; border-radius:9999px;">
+            ⚡ 1:1 다이렉트 스마트 문답 퍼널
+          </span>
+          <p style="font-size:0.875rem; color:#64748B; margin-top:6px;">답변을 입력하시면 다음 질문이 스르륵 순서대로 열립니다.</p>
         </div>
-
-        <!-- Dynamic Step Body -->
-        <div class="wizard-body">
-          ${this._renderStepContent(state)}
-        </div>
-
-        <!-- Navigation Footer -->
-        <div class="wizard-footer">
-          ${this.currentStep > 1 ? `
-            <button id="wizard-btn-prev" class="wizard-btn-prev">
-              ← 이전 단계
-            </button>
-          ` : `<div></div>`}
-
-          ${this.currentStep < this.totalSteps ? `
-            <button id="wizard-btn-next" class="wizard-btn-next">
-              다음 단계로 이동 →
-            </button>
-          ` : `
-            <button id="wizard-btn-finish" class="wizard-btn-next" style="background: #0B2545; border: 2px solid #D97706;">
-              🖨️ 최종 네컷 카드 즉석 인쇄
-            </button>
-          `}
-        </div>
-
-      </div>
     `;
 
-    this._bindEvents(state);
-  }
-
-  /**
-   * 단계별 본문 렌더링
-   */
-  _renderStepContent(state) {
-    switch (this.currentStep) {
-      // Step 1: 학생 기본 정보
-      case 1:
-        return `
-          <div>
-            <div style="font-size: 0.8rem; font-weight: 700; color: #D97706; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem;">
-              STEP 01. STUDENT IDENTIFICATION
-            </div>
-            <h2 class="wizard-headline">반갑습니다! 학생 정보를 알려주세요.</h2>
-            <p class="wizard-subheadline">
-              입력하신 정보는 학생증 및 아카데믹 네컷 로드맵 카드에 인쇄되며, 부스 종료 시 안전하게 리셋됩니다.
-            </p>
-
-            <div style="display: flex; flex-direction: column; gap: 1.25rem; max-width: 520px;">
-              <div>
-                <label style="font-weight: 700; font-size: 0.9rem; color: var(--color-oxford-navy); display: block; margin-bottom: 0.4rem;">
-                  학생 이름
-                </label>
-                <input type="text" id="wiz-input-name" value="${state.profile.name || ''}" placeholder="예: 김의령" style="
-                  width: 100%; padding: 0.85rem 1rem; border: 2px solid var(--color-border-subtle); border-radius: 8px; font-size: 1rem;
-                ">
+    // Step 1: 학생 이름
+    if (this.streamCurrentStep >= 1) {
+      const isCollapsed = currentActive !== 1 && this.streamCurrentStep > 1;
+      if (isCollapsed) {
+        html += `
+          <div id="stream-step-1" class="stream-step-card collapsed-summary" onclick="window.__streamWizard.editStep(1)">
+            <div class="stream-summary-bar">
+              <div class="stream-summary-left">
+                <div class="stream-check-icon">✓</div>
+                <div>
+                  <span class="stream-summary-label">STEP 01. 학생 이름: </span>
+                  <strong class="stream-summary-value">${state.profile.name || '김의령'}</strong>
+                </div>
               </div>
-
-              <div>
-                <label style="font-weight: 700; font-size: 0.9rem; color: var(--color-oxford-navy); display: block; margin-bottom: 0.4rem;">
-                  희망 직업 또는 목표 세부 진로 (선택)
-                </label>
-                <input type="text" id="wiz-input-career" value="${state.profile.targetCareer || ''}" placeholder="예: 인공지능 연구원, 바이오 신약 개발자, 로스쿨 변호사" style="
-                  width: 100%; padding: 0.85rem 1rem; border: 2px solid var(--color-border-subtle); border-radius: 8px; font-size: 1rem;
-                ">
-                <span style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 4px; display: block;">
-                  💡 입력 시 관련 교과서 단원과 세특 탐구 주제가 1ms 내로 자동 매칭됩니다.
-                </span>
+              <button class="stream-edit-btn">수정</button>
+            </div>
+          </div>
+        `;
+      } else {
+        html += `
+          <div id="stream-step-1" class="stream-step-card active-question animate-reveal">
+            <div class="stream-card-body">
+              <div class="stream-step-badge">STEP 01 • STUDENT PROFILE</div>
+              <h2 class="stream-question-title">반갑습니다! 학생의 이름을 알려주세요.</h2>
+              <p class="stream-question-desc">의령여자고등학교 선택과목 박람회에 오신 것을 환영합니다. 학생증 및 네컷 카드에 표기될 이름입니다.</p>
+              <div style="display:flex; gap:10px; max-width:480px;">
+                <input type="text" id="stream-name-input" value="${state.profile.name || ''}" placeholder="예: 김의령" 
+                  style="flex:1; padding:0.9rem 1.15rem; border:2px solid #CBD5E1; border-radius:8px; font-size:1.1rem; font-weight:600;"
+                  onkeydown="if(event.key==='Enter') window.__streamWizard.handleNameConfirm();">
+                <button class="stream-action-btn" onclick="window.__streamWizard.handleNameConfirm()">다음 →</button>
               </div>
             </div>
           </div>
         `;
+      }
+    }
 
-      // Step 2: 6대 핵심 진로 계열 선택
-      case 2:
-        return `
-          <div>
-            <div style="font-size: 0.8rem; font-weight: 700; color: #D97706; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem;">
-              STEP 02. CAREER PATH SELECTION
-            </div>
-            <h2 class="wizard-headline">어떤 진로 계열에 가장 관심이 있나요?</h2>
-            <p class="wizard-subheadline">
-              계열을 선택하시면 2022 개정 영어과 3개년 최적화 과목 조합이 자동으로 추천 배치됩니다.
-            </p>
-
-            <div class="wizard-card-grid">
-              ${CAREER_CATEGORIES.map(cat => {
-                const isSelected = cat.id === state.profile.careerCategoryId;
-                return `
-                  <div class="wizard-select-card ${isSelected ? 'selected' : ''}" data-cat-id="${cat.id}">
-                    <div>
-                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <span class="academic-badge ${isSelected ? 'badge-suneung' : 'badge-career'}">${cat.name.split(' ')[0]}</span>
-                        ${isSelected ? '<span style="color: var(--color-oxford-navy); font-weight: 700; font-size: 0.85rem;">✓ 선택됨</span>' : ''}
-                      </div>
-                      <h4 style="font-size: 1.1rem; font-weight: 700; color: var(--color-oxford-navy); margin-bottom: 0.35rem;">
-                        ${cat.name}
-                      </h4>
-                      <p style="font-size: 0.8rem; color: var(--color-text-secondary); line-height: 1.45;">
-                        ${cat.description}
-                      </p>
-                    </div>
-                  </div>
-                `;
-              }).join('')}
+    // Step 2: 진로 계열
+    if (this.streamCurrentStep >= 2) {
+      const isCollapsed = currentActive !== 2 && this.streamCurrentStep > 2;
+      if (isCollapsed) {
+        html += `
+          <div id="stream-step-2" class="stream-step-card collapsed-summary" onclick="window.__streamWizard.editStep(2)">
+            <div class="stream-summary-bar">
+              <div class="stream-summary-left">
+                <div class="stream-check-icon">✓</div>
+                <div>
+                  <span class="stream-summary-label">STEP 02. 진로 계열: </span>
+                  <strong class="stream-summary-value">${state.profile.careerCategory}</strong>
+                </div>
+              </div>
+              <button class="stream-edit-btn">수정</button>
             </div>
           </div>
         `;
-
-      // Step 3: 3개년 과목 선택
-      case 3:
-        const validation = curriculumEngine.validateCurriculum(state.curriculum, state.profile.careerCategoryId);
-        const groups = curriculumEngine.getSubjectGroups();
-
-        return `
-          <div>
-            <div style="font-size: 0.8rem; font-weight: 700; color: #D97706; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem;">
-              STEP 03. 3-YEAR ENGLISH CURRICULUM
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-              <h2 class="wizard-headline">3학년 선택과목을 확인하고 조정하세요.</h2>
-              <span class="academic-badge badge-suneung">총 ${validation.totalCredits}학점</span>
-            </div>
-            <p class="wizard-subheadline">
-              1학년(기초필수)과 2학년(수능 일반선택)은 안정적으로 자동 배치되었습니다. 3학년에서 진로에 맞게 자유롭게 터치하여 과목을 선택/해제하세요.
-            </p>
-
-            <!-- 3학년 진로선택 -->
-            <div style="margin-bottom: 1.25rem;">
-              <div style="font-size: 0.85rem; font-weight: 700; color: #B45309; margin-bottom: 0.5rem;">
-                📚 진로선택 과목군 (성취평가 A·B·C / 학종 심화)
-              </div>
-              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.65rem;">
-                ${groups.year3Career.map(sub => {
-                  const sel = state.curriculum.year3Career.includes(sub.name);
+      } else {
+        html += `
+          <div id="stream-step-2" class="stream-step-card active-question animate-reveal">
+            <div class="stream-card-body">
+              <div class="stream-step-badge">STEP 02 • CAREER FIELD</div>
+              <h2 class="stream-question-title">${state.profile.name || '학생'}님, 어떤 진로 계열에 가장 관심이 있나요?</h2>
+              <p class="stream-question-desc">계열을 터치하시면 2022 개정 3개년 영어 맞춤 과목 편제가 1초 만에 자동 배치됩니다.</p>
+              <div class="stream-card-grid">
+                ${this.careerCategories.map(cat => {
+                  const isSel = cat.id === state.profile.careerCategoryId;
                   return `
-                    <div class="curriculum-item-card ${sel ? 'selected-card' : ''}" data-group="year3Career" data-name="${sub.name}" style="
-                      background: #FFF; border: 2px solid ${sel ? 'var(--color-oxford-navy)' : 'var(--color-border-subtle)'};
-                      border-radius: 8px; padding: 0.85rem; cursor: pointer;
-                    ">
-                      <div style="font-weight: 700; font-size: 0.95rem; color: ${sel ? 'var(--color-oxford-navy)' : 'var(--color-text-main)'};">
-                        ${sub.name}
+                    <div class="stream-select-card ${isSel ? 'selected' : ''}" onclick="window.__streamWizard.handleCategorySelect('${cat.id}')">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span class="academic-badge ${isSel ? 'badge-suneung' : 'badge-career'}">${cat.name.split(' ')[0]}</span>
+                        ${isSel ? '<span style="color:#0B2545; font-weight:700; font-size:0.85rem;">✓ 선택됨</span>' : '<span style="color:#64748B; font-size:0.8rem;">터치하여 선택 →</span>'}
                       </div>
-                      <div style="font-size: 0.725rem; color: var(--color-text-muted); margin-top: 4px;">${sub.summary.slice(0, 38)}...</div>
-                      <div style="margin-top: 8px; font-size: 0.75rem; font-weight: 700; color: ${sel ? 'var(--color-oxford-navy)' : 'var(--color-text-light)'};">
-                        ${sel ? '✓ 선택됨' : '터치하여 추가'}
-                      </div>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-
-            <!-- 3학년 융합선택 -->
-            <div>
-              <div style="font-size: 0.85rem; font-weight: 700; color: #7C2D12; margin-bottom: 0.5rem;">
-                🌐 융합선택 과목군 (실생활·다학제 융합)
-              </div>
-              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.65rem;">
-                ${groups.year3Fusion.map(sub => {
-                  const sel = state.curriculum.year3Fusion.includes(sub.name);
-                  return `
-                    <div class="curriculum-item-card ${sel ? 'selected-card' : ''}" data-group="year3Fusion" data-name="${sub.name}" style="
-                      background: #FFF; border: 2px solid ${sel ? 'var(--color-oxford-navy)' : 'var(--color-border-subtle)'};
-                      border-radius: 8px; padding: 0.85rem; cursor: pointer;
-                    ">
-                      <div style="font-weight: 700; font-size: 0.95rem; color: ${sel ? 'var(--color-oxford-navy)' : 'var(--color-text-main)'};">
-                        ${sub.name}
-                      </div>
-                      <div style="font-size: 0.725rem; color: var(--color-text-muted); margin-top: 4px;">${sub.summary.slice(0, 38)}...</div>
-                      <div style="margin-top: 8px; font-size: 0.75rem; font-weight: 700; color: ${sel ? 'var(--color-oxford-navy)' : 'var(--color-text-light)'};">
-                        ${sel ? '✓ 선택됨' : '터치하여 추가'}
-                      </div>
+                      <h4 style="font-size:1.05rem; font-weight:700; color:#0B2545; margin-bottom:4px;">${cat.name}</h4>
+                      <p style="font-size:0.8rem; color:#475569; line-height:1.4;">${cat.description}</p>
                     </div>
                   `;
                 }).join('')}
@@ -228,182 +149,227 @@ export class WizardView {
             </div>
           </div>
         `;
+      }
+    }
 
-      // Step 4: 교과서 발췌문 & 세특 1선
-      case 4:
-        const tb = state.matchedTextbook;
-        const adv = state.academicAdvice;
-        return `
-          <div>
-            <div style="font-size: 0.8rem; font-weight: 700; color: #D97706; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem;">
-              STEP 04. ACADEMIC EVIDENCE & RESEARCH
-            </div>
-            <h2 class="wizard-headline">선택한 진로와 직결된 교과서 구절입니다.</h2>
-            <p class="wizard-subheadline">
-              교과서의 핵심 지문과 학생부에 기재 가능한 맞춤형 세특 탐구 주제 1선을 확인하세요.
-            </p>
-
-            <!-- Textbook Card -->
-            <div style="background: #FFFFFF; border: 2px solid var(--color-antique-amber); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.25rem;">
-              <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                <span class="academic-badge badge-suneung">${(tb.textbookName || tb.textbook)} (p.${tb.pageNumber || tb.page})</span>
-                <span class="academic-badge badge-career">${state.profile.careerCategory}</span>
+    // Step 3: 세부 직업/진로
+    if (this.streamCurrentStep >= 3) {
+      const isCollapsed = currentActive !== 3 && this.streamCurrentStep > 3;
+      const keywords = this.careerKeywordsMap[state.profile.careerCategoryId] || ['인공지능 연구원', '의사', '변호사'];
+      if (isCollapsed) {
+        html += `
+          <div id="stream-step-3" class="stream-step-card collapsed-summary" onclick="window.__streamWizard.editStep(3)">
+            <div class="stream-summary-bar">
+              <div class="stream-summary-left">
+                <div class="stream-check-icon">✓</div>
+                <div>
+                  <span class="stream-summary-label">STEP 03. 목표 진로: </span>
+                  <strong class="stream-summary-value">${state.profile.targetCareer}</strong>
+                </div>
               </div>
-              <h4 style="font-family: var(--font-serif); font-size: 1.25rem; color: var(--color-oxford-navy); margin-bottom: 0.5rem;">
-                ${tb.unitTitle || tb.unit}
-              </h4>
-              <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; font-size: 0.95rem; line-height: 1.7; font-style: italic; border: 1px solid #E2E8F0;">
-                "<span class="highlight-text" style="background-color: rgba(253, 224, 71, 0.55); padding: 2px 4px;">${tb.snippetText || tb.raw_text}</span>"
-              </div>
-            </div>
-
-            <!-- Se-teuk Guide -->
-            <div style="background: var(--color-antique-amber-subtle); border-left: 4px solid var(--color-antique-amber); padding: 1rem 1.25rem; border-radius: 0 8px 8px 0;">
-              <strong style="color: #B45309; font-size: 0.9rem; display: block; margin-bottom: 0.35rem;">
-                🌟 학생부 세특 추천 탐구 주제 1선:
-              </strong>
-              <p style="color: #78350F; font-size: 0.9rem; line-height: 1.5; font-weight: 500;">
-                ${adv.seTeukGuideline}
-              </p>
+              <button class="stream-edit-btn">수정</button>
             </div>
           </div>
         `;
+      } else {
+        html += `
+          <div id="stream-step-3" class="stream-step-card active-question animate-reveal">
+            <div class="stream-card-body">
+              <div class="stream-step-badge">STEP 03 • TARGET CAREER</div>
+              <h2 class="stream-question-title">구체적인 목표 직업이나 관심 분야가 있나요?</h2>
+              <p class="stream-question-desc">아래 추천 키워드를 터치하시거나, 직접 타이핑하여 입력해 주세요. 즉시 교과서 지문과 세특 가이드가 매칭됩니다.</p>
+              
+              <div style="margin-bottom:1rem;">
+                <span style="font-size:0.8rem; font-weight:700; color:#64748B;">⚡ [${state.profile.careerCategory}] 추천 키워드 (클릭 시 자동 입력):</span>
+                <div class="stream-tag-chips">
+                  ${keywords.map(kw => `
+                    <button class="stream-tag-chip" onclick="window.__streamWizard.handleQuickCareer('${kw}')">+ ${kw}</button>
+                  `).join('')}
+                </div>
+              </div>
 
-      // Step 5: 웹캠 네컷사진 & 최종 카드 인쇄
-      case 5:
-        const hasPhoto = !!state.profile.photoDataUrl;
-        return `
-          <div>
-            <div style="font-size: 0.8rem; font-weight: 700; color: #D97706; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem;">
-              STEP 05. FINAL DELIVERABLE & PHOTOBOOTH
+              <div style="display:flex; gap:10px; max-width:540px;">
+                <input type="text" id="stream-career-input" value="${state.profile.targetCareer || ''}" placeholder="예: 인공지능 신약 연구원, 로스쿨 변호사" 
+                  style="flex:1; padding:0.9rem 1.15rem; border:2px solid #CBD5E1; border-radius:8px; font-size:1.05rem; font-weight:600;"
+                  onkeydown="if(event.key==='Enter') window.__streamWizard.handleCareerConfirm();">
+                <button class="stream-action-btn" onclick="window.__streamWizard.handleCareerConfirm()">확인 및 분석 →</button>
+              </div>
             </div>
-            <h2 class="wizard-headline">마지막 단계! 네컷사진을 찍고 완성하세요.</h2>
-            <p class="wizard-subheadline">
-              웹캠으로 멋진 포즈의 사진을 촬영하면 최종 아카데믹 네컷 로드맵 카드가 완성됩니다.
-            </p>
+          </div>
+        `;
+      }
+    }
 
-            <div style="display: flex; gap: 2rem; align-items: flex-start; justify-content: center; flex-wrap: wrap;">
-              <!-- Photo Shoot Trigger -->
-              <div style="text-align: center; max-width: 240px;">
-                <div style="
-                  width: 150px; height: 180px; border: 2px dashed #0B2545; border-radius: 8px; margin: 0 auto 1rem;
-                  overflow: hidden; background: #F1F5F9; display: flex; align-items: center; justify-content: center;
-                ">
+    // Step 4: 교과서 RAG & 세특
+    if (this.streamCurrentStep >= 4) {
+      const isCollapsed = currentActive !== 4 && this.streamCurrentStep > 4;
+      const tb = state.matchedTextbook;
+      const adv = state.academicAdvice;
+      if (isCollapsed) {
+        html += `
+          <div id="stream-step-4" class="stream-step-card collapsed-summary" onclick="window.__streamWizard.editStep(4)">
+            <div class="stream-summary-bar">
+              <div class="stream-summary-left">
+                <div class="stream-check-icon">✓</div>
+                <div>
+                  <span class="stream-summary-label">STEP 04. 교과서 연계 분석: </span>
+                  <strong class="stream-summary-value">${tb.textbook.split(' ')[0]} ${tb.unit} (매칭 완료)</strong>
+                </div>
+              </div>
+              <button class="stream-edit-btn">확인/수정</button>
+            </div>
+          </div>
+        `;
+      } else {
+        html += `
+          <div id="stream-step-4" class="stream-step-card active-question animate-reveal">
+            <div class="stream-card-body">
+              <div class="stream-step-badge">STEP 04 • ACADEMIC EVIDENCE & RAG</div>
+              <h2 class="stream-question-title">'${state.profile.targetCareer}' 맞춤 교과서 구절 & 세특 탐구 주제를 찾았습니다!</h2>
+              <p class="stream-question-desc">의령여고 영어 교과서 4종 전 단원에서 추출한 실제 원문 지문과 학생부 종합전형 연계 가이드입니다.</p>
+
+              <div style="background:#FFF; border:2px solid #D97706; border-radius:10px; padding:1.35rem; margin-bottom:1.25rem; box-shadow:0 4px 14px rgba(217, 119, 6, 0.08);">
+                <div style="display:flex; gap:6px; margin-bottom:8px;">
+                  <span class="academic-badge badge-suneung">${tb.textbook} (p.${tb.page})</span>
+                  <span class="academic-badge badge-career">${state.profile.careerCategory}</span>
+                </div>
+                <h4 style="font-family:var(--font-serif); font-size:1.25rem; color:#0B2545; margin-bottom:8px;">${tb.unit}</h4>
+                <div style="background:#F8FAFC; padding:1.15rem; border-radius:8px; font-size:0.95rem; line-height:1.75; font-style:italic; border:1px solid #E2E8F0;">
+                  "<span class="highlight-text">${tb.raw_text}</span>"
+                </div>
+              </div>
+
+              <div style="background:#FEF3C7; border-left:4px solid #D97706; padding:1.15rem 1.35rem; border-radius:0 8px 8px 0; margin-bottom:1.5rem;">
+                <strong style="color:#B45309; font-size:0.9rem; display:block; margin-bottom:4px;">🌟 학생부 세특 추천 탐구 가이드 (1선):</strong>
+                <p style="color:#78350F; font-size:0.9rem; line-height:1.6; font-weight:600;">${adv.seTeukGuideline}</p>
+              </div>
+
+              <button class="stream-action-btn" onclick="window.__streamWizard.completeStep(4)">
+                확인하고 3개년 영어 로드맵 설계하기 →
+              </button>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Step 5: 3개년 과목 선택
+    if (this.streamCurrentStep >= 5) {
+      const isCollapsed = currentActive !== 5 && this.streamCurrentStep > 5;
+      const allSubs = Object.values(this.curriculumData);
+      const y3Career = allSubs.filter(s => s.grade === 3 && s.type === "진로선택");
+      const y3Fusion = allSubs.filter(s => s.grade === 3 && s.type === "융합선택");
+      const selCount = state.curriculum.year3Career.length + state.curriculum.year3Fusion.length;
+
+      if (isCollapsed) {
+        html += `
+          <div id="stream-step-5" class="stream-step-card collapsed-summary" onclick="window.__streamWizard.editStep(5)">
+            <div class="stream-summary-bar">
+              <div class="stream-summary-left">
+                <div class="stream-check-icon">✓</div>
+                <div>
+                  <span class="stream-summary-label">STEP 05. 3개년 과목 설계: </span>
+                  <strong class="stream-summary-value">3학년 선택과목 ${selCount}개 확정 완료</strong>
+                </div>
+              </div>
+              <button class="stream-edit-btn">수정</button>
+            </div>
+          </div>
+        `;
+      } else {
+        html += `
+          <div id="stream-step-5" class="stream-step-card active-question animate-reveal">
+            <div class="stream-card-body">
+              <div class="stream-step-badge">STEP 05 • 3-YEAR CURRICULUM</div>
+              <h2 class="stream-question-title">3개년 영어 과목이 설계되었습니다. 3학년 과목을 자유롭게 조정해보세요.</h2>
+              <p class="stream-question-desc">1학년(공통필수)과 2학년(수능 일반선택)은 탄탄하게 기본 배치되었습니다. 3학년 과목을 터치하여 추가/해제할 수 있습니다.</p>
+
+              <div style="margin-bottom:1.25rem;">
+                <div style="font-size:0.85rem; font-weight:700; color:#B45309; margin-bottom:8px;">📚 진로선택 과목군 (성취평가 A·B·C):</div>
+                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;">
+                  ${y3Career.map(s => {
+                    const sel = state.curriculum.year3Career.includes(s.name);
+                    return `
+                      <div class="curriculum-item-card ${sel ? 'selected-card' : ''}" onclick="window.__streamWizard.toggleSubject('year3Career', '${s.name}')" 
+                           style="background:#FFF; border:2px solid ${sel ? '#0B2545':'#E2E8F0'}; border-radius:8px; padding:10px; cursor:pointer;">
+                        <div style="font-weight:700; font-size:0.95rem; color:${sel ? '#0B2545':'#0F172A'};">${s.name}</div>
+                        <div style="font-size:0.7rem; color:#64748B; margin-top:4px;">${s.summary.slice(0, 36)}...</div>
+                        <div style="margin-top:6px; font-size:0.75rem; font-weight:700; color:${sel ? '#0B2545':'#94A3B8'};">${sel ? '✓ 선택됨' : '터치하여 추가'}</div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              <div style="margin-bottom:1.5rem;">
+                <div style="font-size:0.85rem; font-weight:700; color:#7C2D12; margin-bottom:8px;">🌐 융합선택 과목군 (실생활·다학제):</div>
+                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;">
+                  ${y3Fusion.map(s => {
+                    const sel = state.curriculum.year3Fusion.includes(s.name);
+                    return `
+                      <div class="curriculum-item-card ${sel ? 'selected-card' : ''}" onclick="window.__streamWizard.toggleSubject('year3Fusion', '${s.name}')" 
+                           style="background:#FFF; border:2px solid ${sel ? '#0B2545':'#E2E8F0'}; border-radius:8px; padding:10px; cursor:pointer;">
+                        <div style="font-weight:700; font-size:0.95rem; color:${sel ? '#0B2545':'#0F172A'};">${s.name}</div>
+                        <div style="font-size:0.7rem; color:#64748B; margin-top:4px;">${s.summary.slice(0, 36)}...</div>
+                        <div style="margin-top:6px; font-size:0.75rem; font-weight:700; color:${sel ? '#0B2545':'#94A3B8'};">${sel ? '✓ 선택됨' : '터치하여 추가'}</div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              <button class="stream-action-btn" onclick="window.__streamWizard.completeStep(5)">
+                과목 확정하고 네컷사진 촬영하기 📸
+              </button>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Step 6: 웹캠 포토부스 & 최종 출력
+    if (this.streamCurrentStep >= 6) {
+      const hasPhoto = !!state.profile.photoDataUrl;
+      html += `
+        <div id="stream-step-6" class="stream-step-card active-question animate-reveal" style="border-color:#D97706;">
+          <div class="stream-card-body">
+            <div class="stream-step-badge">FINAL STEP • PHOTOBOOTH & DELIVERABLE</div>
+            <h2 class="stream-question-title">마지막 단계! 네컷사진을 찍고 나만의 학업 포토카드를 완성하세요.</h2>
+            <p class="stream-question-desc">웹캠으로 즉석 사진을 촬영하면 우측 아카데믹 네컷 카드에 실시간 합성되어 즉석 출력할 수 있습니다.</p>
+
+            <div style="display:flex; gap:2.5rem; align-items:flex-start; justify-content:center; flex-wrap:wrap; margin-bottom:1.5rem;">
+              <div style="text-align:center; max-width:240px;">
+                <div style="width:140px; height:180px; border:2px dashed #0B2545; border-radius:10px; margin:0 auto 1.25rem; overflow:hidden; background:#F1F5F9; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(11,37,69,0.08);">
                   ${hasPhoto ? `
-                    <img src="${state.profile.photoDataUrl}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <img src="${state.profile.photoDataUrl}" style="width:100%; height:100%; object-fit:cover;">
                   ` : `
-                    <div style="color: #64748B;">
-                      <div style="font-size: 3rem;">📸</div>
-                      <div style="font-size: 0.8rem; font-weight: 700; margin-top: 4px;">사진 미촬영</div>
+                    <div style="color:#64748B;">
+                      <div style="font-size:2.8rem;">📸</div>
+                      <div style="font-size:0.8rem; font-weight:700; margin-top:4px;">사진 미촬영</div>
                     </div>
                   `}
                 </div>
-
-                <button id="wiz-btn-photo" class="academic-btn btn-primary" style="
-                  width: 100%; padding: 0.75rem; font-size: 0.95rem; font-weight: 700; border: 2px solid #D97706;
-                ">
-                  ${hasPhoto ? '🔄 사진 다시 찍기' : '📸 3초 타이머 사진 촬영'}
+                <button onclick="window.openWebcamBooth()" class="academic-btn btn-primary" style="width:100%; padding:0.85rem; font-weight:700; border:2px solid #D97706; font-size:1rem;">
+                  ${hasPhoto ? '🔄 사진 다시 찍기' : '📸 3초 타이머 찰칵!'}
                 </button>
               </div>
 
-              <!-- Preview Card Scale -->
               <div style="transform: scale(0.85); transform-origin: top center;">
-                ${photocardBuilder.generateCardMarkup(state)}
+                <div id="wizard-photocard-preview"></div>
               </div>
             </div>
+
+            <div style="text-align:center; padding-top:1.25rem; border-top:1px solid #E2E8F0;">
+              <button onclick="window.print()" class="stream-action-btn" style="background:#0B2545; border:2px solid #D97706; padding:1rem 2.5rem; font-size:1.1rem;">
+                🖨️ 최종 아카데믹 네컷 카드 즉석 인쇄하기
+              </button>
+            </div>
           </div>
-        `;
-    }
-  }
-
-  /**
-   * 이벤트 바인딩
-   */
-  _bindEvents(state) {
-    // 이전 버튼
-    const prevBtn = this.container.querySelector('#wizard-btn-prev');
-    if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
-        if (this.currentStep > 1) {
-          this.currentStep--;
-          this.render();
-        }
-      });
+        </div>
+      `;
     }
 
-    // 다음 버튼
-    const nextBtn = this.container.querySelector('#wizard-btn-next');
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        // Step 1 유효성 검사 및 저장
-        if (this.currentStep === 1) {
-          const nameInput = this.container.querySelector('#wiz-input-name');
-          const careerInput = this.container.querySelector('#wiz-input-career');
-          roadmapStore.updateProfile({
-            name: nameInput.value.trim(),
-            targetCareer: careerInput.value.trim()
-          });
-          const st = roadmapStore.getState();
-          ragMatcher.syncToStore(st.profile.careerCategory, careerInput.value.trim());
-          academicAiModule.consult(st.profile.careerCategoryId, careerInput.value.trim());
-        }
-
-        if (this.currentStep < this.totalSteps) {
-          this.currentStep++;
-          this.render();
-        }
-      });
-    }
-
-    // 최종 인쇄 버튼
-    const finishBtn = this.container.querySelector('#wizard-btn-finish');
-    if (finishBtn) {
-      finishBtn.addEventListener('click', () => {
-        window.print();
-      });
-    }
-
-    // Step 2 계열 카드 클릭 시 자동 다음 단계 이동 (다이렉트 UX)
-    if (this.currentStep === 2) {
-      const cards = this.container.querySelectorAll('.wizard-select-card');
-      cards.forEach(card => {
-        card.addEventListener('click', () => {
-          const catId = card.dataset.catId;
-          curriculumEngine.applyCategoryPreset(catId);
-          const st = roadmapStore.getState();
-          ragMatcher.syncToStore(st.profile.careerCategory, st.profile.targetCareer);
-          academicAiModule.consult(catId, st.profile.targetCareer);
-
-          // 부드럽게 다음 단계로 자동 진행
-          setTimeout(() => {
-            this.currentStep = 3;
-            this.render();
-          }, 200);
-        });
-      });
-    }
-
-    // Step 3 과목 토글
-    if (this.currentStep === 3) {
-      const cards = this.container.querySelectorAll('.curriculum-item-card');
-      cards.forEach(card => {
-        card.addEventListener('click', () => {
-          const group = card.dataset.group;
-          const name = card.dataset.name;
-          roadmapStore.toggleSubject(group, name);
-          this.render();
-        });
-      });
-    }
-
-    // Step 5 사진 촬영 트리거
-    if (this.currentStep === 5) {
-      const photoBtn = this.container.querySelector('#wiz-btn-photo');
-      if (photoBtn) {
-        photoBtn.addEventListener('click', () => {
-          window.openWebcamBooth();
-        });
-      }
-    }
+    html += `</div>`;
+    this.container.innerHTML = html;
   }
 }
