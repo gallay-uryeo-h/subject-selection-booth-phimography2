@@ -267,6 +267,191 @@
       border-color: var(--color-oxford-navy);
       box-shadow: var(--shadow-md);
     }
+
+    /* =========================================
+       Wizard Funnel CSS Styles
+       ========================================= */
+    .wizard-funnel-container {
+      max-width: 820px;
+      margin: 1.5rem auto 3rem;
+      background: var(--color-bg-base);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(11, 37, 69, 0.08);
+      overflow: hidden;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .wizard-progress-header {
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--color-border-subtle);
+      padding: 1.25rem 2rem 1rem;
+    }
+
+    .wizard-progress-track {
+      width: 100%;
+      height: 6px;
+      background: #E2E8F0;
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-top: 0.75rem;
+    }
+
+    .wizard-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-oxford-navy), var(--color-antique-amber));
+      border-radius: 9999px;
+      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .wizard-step-indicator {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--color-text-muted);
+    }
+
+    .wizard-step-indicator .active-step-title {
+      color: var(--color-oxford-navy);
+      font-size: 0.85rem;
+    }
+
+    .wizard-body {
+      padding: 2.25rem 2.25rem 1.75rem;
+      min-height: 480px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .wizard-headline {
+      font-family: var(--font-serif);
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: var(--color-oxford-navy);
+      margin-bottom: 0.4rem;
+      line-height: 1.3;
+    }
+
+    .wizard-subheadline {
+      font-size: 0.9rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 1.75rem;
+      line-height: 1.5;
+    }
+
+    .wizard-card-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.85rem;
+    }
+
+    .wizard-select-card {
+      background: #FFFFFF;
+      border: 2px solid var(--color-border-subtle);
+      border-radius: 10px;
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .wizard-select-card:hover {
+      border-color: var(--color-border-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(11, 37, 69, 0.08);
+    }
+
+    .wizard-select-card.selected {
+      border-color: var(--color-oxford-navy);
+      background: var(--color-oxford-navy-subtle);
+      box-shadow: 0 0 0 1px var(--color-oxford-navy), 0 8px 20px rgba(11, 37, 69, 0.12);
+    }
+
+    .wizard-footer {
+      border-top: 1px solid var(--color-border-subtle);
+      padding: 1.15rem 2.25rem;
+      background: #F8FAFC;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .wizard-btn-prev {
+      background: transparent;
+      border: 1px solid var(--color-border-medium);
+      color: var(--color-text-secondary);
+      padding: 0.65rem 1.25rem;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .wizard-btn-prev:hover {
+      background: #FFFFFF;
+      border-color: var(--color-oxford-navy);
+      color: var(--color-oxford-navy);
+    }
+
+    .wizard-btn-next {
+      background: var(--color-oxford-navy);
+      color: #FFFFFF;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(11, 37, 69, 0.2);
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .wizard-btn-next:hover {
+      background: var(--color-oxford-navy-hover);
+      transform: translateY(-1px);
+    }
+
+    .mode-switch-bar {
+      display: flex;
+      justify-content: center;
+      padding: 0.65rem 1rem;
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+
+    .mode-switch-toggle {
+      display: inline-flex;
+      background: var(--color-bg-surface-elevated);
+      padding: 3px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--color-border-subtle);
+    }
+
+    .mode-btn {
+      padding: 0.45rem 1.25rem;
+      border-radius: var(--radius-full);
+      font-size: 0.825rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--color-text-muted);
+      transition: all 0.15s;
+    }
+
+    .mode-btn.active {
+      background: var(--color-oxford-navy);
+      color: #FFFFFF;
+      box-shadow: var(--shadow-sm);
+    }
   </style>
 </head>
 <body>
@@ -296,8 +481,26 @@
     </div>
   </header>
 
-  <!-- Main App Shell -->
-  <main class="app-container">
+  <!-- View Mode Switcher -->
+  <div class="mode-switch-bar">
+    <div class="mode-switch-toggle">
+      <button id="mode-btn-wizard" class="mode-btn active" onclick="window.switchViewMode('wizard')">
+        🚀 1:1 단계별 시작 (다이렉트 모드)
+      </button>
+      <button id="mode-btn-dashboard" class="mode-btn" onclick="window.switchViewMode('dashboard')">
+        📊 전체 한눈에 보기 (전문가 모드)
+      </button>
+    </div>
+  </div>
+
+  <!-- Container for Wizard Funnel Mode (Default) -->
+  <div id="view-mode-wizard" style="display: block;">
+    <div id="wizard-funnel-mount-slot"></div>
+  </div>
+
+  <!-- Container for Full Dashboard Mode (Toggleable) -->
+  <div id="view-mode-dashboard" style="display: none;">
+    <main class="app-container">
     <div class="grid-layout">
       
       <!-- Left Column: Input, Career Selection & Roadmap Builder -->
@@ -385,6 +588,7 @@
 
     </div>
   </main>
+  </div>
 
   <!-- Complete Standalone JavaScript Bundle -->
   <script>
@@ -1197,10 +1401,263 @@
       } catch (e) {}
     }
 
-    // [8] Event Handlers & Timer
+    // [8] Direct Wizard Funnel Implementation
+    let wizardCurrentStep = 1;
+    const wizardTotalSteps = 5;
+
+    window.switchViewMode = (mode) => {
+      const wizardContainer = document.getElementById('view-mode-wizard');
+      const dashContainer = document.getElementById('view-mode-dashboard');
+      const btnWiz = document.getElementById('mode-btn-wizard');
+      const btnDash = document.getElementById('mode-btn-dashboard');
+
+      if (mode === 'wizard') {
+        wizardContainer.style.display = 'block';
+        dashContainer.style.display = 'none';
+        btnWiz.classList.add('active');
+        btnDash.classList.remove('active');
+        renderWizardApp();
+      } else {
+        wizardContainer.style.display = 'none';
+        dashContainer.style.display = 'block';
+        btnWiz.classList.remove('active');
+        btnDash.classList.add('active');
+        renderApp();
+      }
+    };
+
+    function renderWizardApp() {
+      const slot = document.getElementById('wizard-funnel-mount-slot');
+      if (!slot) return;
+      const state = store.getState();
+      const pct = (wizardCurrentStep / wizardTotalSteps) * 100;
+      const stepNames = ["기본 정보 입력", "진로 계열 선택", "3개년 과목 선택", "교과서 & 세특 확인", "네컷사진 & 인쇄"];
+
+      slot.innerHTML = `
+        <div class="wizard-funnel-container">
+          <div class="wizard-progress-header">
+            <div class="wizard-step-indicator">
+              <span class="active-step-title">STEP 0${wizardCurrentStep}. ${stepNames[wizardCurrentStep - 1]}</span>
+              <span>${wizardCurrentStep} / ${wizardTotalSteps}</span>
+            </div>
+            <div class="wizard-progress-track">
+              <div class="wizard-progress-bar" style="width: ${pct}%;"></div>
+            </div>
+          </div>
+
+          <div class="wizard-body">
+            ${getWizardStepHtml(state)}
+          </div>
+
+          <div class="wizard-footer">
+            ${wizardCurrentStep > 1 ? `
+              <button class="wizard-btn-prev" onclick="window.wizardPrevStep()">← 이전 단계</button>
+            ` : `<div></div>`}
+
+            ${wizardCurrentStep < wizardTotalSteps ? `
+              <button class="wizard-btn-next" onclick="window.wizardNextStep()">다음 단계로 이동 →</button>
+            ` : `
+              <button class="wizard-btn-next" onclick="window.print()" style="background:#0B2545; border:2px solid #D97706;">🖨️ 최종 네컷 카드 즉석 출력</button>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function getWizardStepHtml(state) {
+      if (wizardCurrentStep === 1) {
+        return `
+          <div>
+            <div style="font-size:0.75rem; font-weight:700; color:#D97706; text-transform:uppercase; margin-bottom:4px;">STEP 01. STUDENT PROFILE</div>
+            <h2 class="wizard-headline">반갑습니다! 학생 정보를 입력해 주세요.</h2>
+            <p class="wizard-subheadline">의령여자고등학교 선택과목 박람회에 오신 것을 환영합니다. 학생증 및 네컷 카드에 표기될 정보를 작성해 주세요.</p>
+            <div style="display:flex; flex-direction:column; gap:1.25rem; max-width:520px;">
+              <div>
+                <label style="font-weight:700; font-size:0.9rem; color:#0B2545; display:block; margin-bottom:4px;">학생 이름</label>
+                <input type="text" id="wiz-name-input" value="${state.profile.name || ''}" placeholder="예: 김의령" style="width:100%; padding:0.85rem 1rem; border:2px solid #E2E8F0; border-radius:8px; font-size:1rem;" oninput="store.updateProfile({name: this.value})">
+              </div>
+              <div>
+                <label style="font-weight:700; font-size:0.9rem; color:#0B2545; display:block; margin-bottom:4px;">희망 직업 또는 목표 세부 진로</label>
+                <input type="text" id="wiz-career-input" value="${state.profile.targetCareer || ''}" placeholder="예: 인공지능 연구원, 바이오 신약 개발자, 로스쿨 변호사" style="width:100%; padding:0.85rem 1rem; border:2px solid #E2E8F0; border-radius:8px; font-size:1rem;" onchange="window.handleWizardCareerChange(this.value)">
+                <span style="font-size:0.75rem; color:#64748B; margin-top:4px; display:block;">💡 입력 시 관련 교과서 구절과 세특 탐구 주제가 1ms 내로 자동 매칭됩니다.</span>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (wizardCurrentStep === 2) {
+        return `
+          <div>
+            <div style="font-size:0.75rem; font-weight:700; color:#D97706; text-transform:uppercase; margin-bottom:4px;">STEP 02. CAREER PATH SELECTION</div>
+            <h2 class="wizard-headline">어떤 진로 계열에 가장 관심이 있나요?</h2>
+            <p class="wizard-subheadline">계열 카드를 터치하시면 2022 개정 3개년 추천 영어 과목이 자동으로 배치됩니다.</p>
+            <div class="wizard-card-grid">
+              ${CAREER_CATEGORIES.map(cat => {
+                const isSel = cat.id === state.profile.careerCategoryId;
+                return `
+                  <div class="wizard-select-card ${isSel ? 'selected' : ''}" onclick="window.wizardSelectCategory('${cat.id}')">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                      <span class="academic-badge ${isSel ? 'badge-suneung' : 'badge-career'}">${cat.name.split(' ')[0]}</span>
+                      ${isSel ? '<span style="color:#0B2545; font-weight:700; font-size:0.85rem;">✓ 선택됨</span>' : ''}
+                    </div>
+                    <h4 style="font-size:1.05rem; font-weight:700; color:#0B2545; margin-bottom:4px;">${cat.name}</h4>
+                    <p style="font-size:0.78rem; color:#475569; line-height:1.4;">${cat.description}</p>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      } else if (wizardCurrentStep === 3) {
+        const allSubs = Object.values(CURRICULUM_METADATA);
+        const y3Career = allSubs.filter(s => s.grade === 3 && s.type === "진로선택");
+        const y3Fusion = allSubs.filter(s => s.grade === 3 && s.type === "융합선택");
+        return `
+          <div>
+            <div style="font-size:0.75rem; font-weight:700; color:#D97706; text-transform:uppercase; margin-bottom:4px;">STEP 03. 3-YEAR CURRICULUM</div>
+            <h2 class="wizard-headline">3학년 영어 선택과목을 결정하세요.</h2>
+            <p class="wizard-subheadline">1학년(공통필수)과 2학년(수능 일반선택)은 이미 탄탄히 배치되었습니다. 3학년에서 이수할 과목을 터치하여 선택/해제하세요.</p>
+            
+            <div style="margin-bottom:1.25rem;">
+              <div style="font-size:0.85rem; font-weight:700; color:#B45309; margin-bottom:6px;">📚 진로선택 과목군 (성취평가 A·B·C)</div>
+              <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;">
+                ${y3Career.map(s => {
+                  const sel = state.curriculum.year3Career.includes(s.name);
+                  return `
+                    <div class="curriculum-item-card ${sel ? 'selected-card' : ''}" onclick="window.wizardToggleSubject('year3Career', '${s.name}')" style="background:#FFF; border:2px solid ${sel ? '#0B2545':'#E2E8F0'}; border-radius:8px; padding:10px; cursor:pointer;">
+                      <div style="font-weight:700; font-size:0.95rem; color:${sel ? '#0B2545':'#0F172A'};">${s.name}</div>
+                      <div style="font-size:0.7rem; color:#64748B; margin-top:4px;">${s.summary.slice(0, 36)}...</div>
+                      <div style="margin-top:6px; font-size:0.75rem; font-weight:700; color:${sel ? '#0B2545':'#94A3B8'};">${sel ? '✓ 선택됨' : '터치하여 추가'}</div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
+            <div>
+              <div style="font-size:0.85rem; font-weight:700; color:#7C2D12; margin-bottom:6px;">🌐 융합선택 과목군 (실생활·다학제)</div>
+              <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;">
+                ${y3Fusion.map(s => {
+                  const sel = state.curriculum.year3Fusion.includes(s.name);
+                  return `
+                    <div class="curriculum-item-card ${sel ? 'selected-card' : ''}" onclick="window.wizardToggleSubject('year3Fusion', '${s.name}')" style="background:#FFF; border:2px solid ${sel ? '#0B2545':'#E2E8F0'}; border-radius:8px; padding:10px; cursor:pointer;">
+                      <div style="font-weight:700; font-size:0.95rem; color:${sel ? '#0B2545':'#0F172A'};">${s.name}</div>
+                      <div style="font-size:0.7rem; color:#64748B; margin-top:4px;">${s.summary.slice(0, 36)}...</div>
+                      <div style="margin-top:6px; font-size:0.75rem; font-weight:700; color:${sel ? '#0B2545':'#94A3B8'};">${sel ? '✓ 선택됨' : '터치하여 추가'}</div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (wizardCurrentStep === 4) {
+        const tb = state.matchedTextbook;
+        const adv = state.academicAdvice;
+        return `
+          <div>
+            <div style="font-size:0.75rem; font-weight:700; color:#D97706; text-transform:uppercase; margin-bottom:4px;">STEP 04. ACADEMIC EVIDENCE</div>
+            <h2 class="wizard-headline">선택한 진로와 직결된 교과서 구절 & 세특 탐구입니다.</h2>
+            <p class="wizard-subheadline">의령여고 영어과 교과서에서 추출한 실제 지문과 학생부 종합전형 맞춤형 탐구 주제 1선을 확인하세요.</p>
+
+            <div style="background:#FFF; border:2px solid #D97706; border-radius:8px; padding:1.25rem; margin-bottom:1rem;">
+              <div style="display:flex; gap:6px; margin-bottom:6px;">
+                <span class="academic-badge badge-suneung">${tb.textbook.split(' ')[0]} (p.${tb.page})</span>
+                <span class="academic-badge badge-career">${state.profile.careerCategory}</span>
+              </div>
+              <h4 style="font-family:var(--font-serif); font-size:1.2rem; color:#0B2545; margin-bottom:8px;">${tb.unit}</h4>
+              <div style="background:#F8FAFC; padding:1rem; border-radius:6px; font-size:0.925rem; line-height:1.7; font-style:italic; border:1px solid #E2E8F0;">
+                "<span class="highlight-text">${tb.raw_text}</span>"
+              </div>
+            </div>
+
+            <div style="background:#FEF3C7; border-left:4px solid #D97706; padding:1rem 1.25rem; border-radius:0 8px 8px 0;">
+              <strong style="color:#B45309; font-size:0.875rem; display:block; margin-bottom:4px;">🌟 학생부 세특 추천 탐구 주제 1선:</strong>
+              <p style="color:#78350F; font-size:0.875rem; line-height:1.5; font-weight:500;">${adv.seTeukGuideline}</p>
+            </div>
+          </div>
+        `;
+      } else if (wizardCurrentStep === 5) {
+        const hasPhoto = !!state.profile.photoDataUrl;
+        return `
+          <div>
+            <div style="font-size:0.75rem; font-weight:700; color:#D97706; text-transform:uppercase; margin-bottom:4px;">STEP 05. PHOTOBOOTH & FINAL DELIVERABLE</div>
+            <h2 class="wizard-headline">마지막 단계! 네컷사진을 찍고 완성하세요.</h2>
+            <p class="wizard-subheadline">웹캠으로 즉석 사진을 촬영하면 우측 아카데믹 네컷 카드에 실시간 합성됩니다.</p>
+
+            <div style="display:flex; gap:2rem; align-items:flex-start; justify-content:center; flex-wrap:wrap;">
+              <div style="text-align:center; max-width:220px;">
+                <div style="width:130px; height:160px; border:2px dashed #0B2545; border-radius:8px; margin:0 auto 1rem; overflow:hidden; background:#F1F5F9; display:flex; align-items:center; justify-content:center;">
+                  ${hasPhoto ? `
+                    <img src="${state.profile.photoDataUrl}" style="width:100%; height:100%; object-fit:cover;">
+                  ` : `
+                    <div style="color:#64748B;">
+                      <div style="font-size:2.5rem;">📸</div>
+                      <div style="font-size:0.75rem; font-weight:700; margin-top:2px;">사진 미촬영</div>
+                    </div>
+                  `}
+                </div>
+                <button onclick="window.openWebcamBooth()" class="academic-btn btn-primary" style="width:100%; padding:0.75rem; font-weight:700; border:2px solid #D97706;">
+                  ${hasPhoto ? '🔄 사진 다시 찍기' : '📸 3초 타이머 찰칵!'}
+                </button>
+              </div>
+
+              <div style="transform: scale(0.8); transform-origin: top center;">
+                <div id="wizard-photocard-preview"></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    window.wizardNextStep = () => {
+      if (wizardCurrentStep < wizardTotalSteps) {
+        wizardCurrentStep++;
+        renderWizardApp();
+        if (wizardCurrentStep === 5) {
+          setTimeout(() => {
+            const slot = document.getElementById('wizard-photocard-preview');
+            const mainSlot = document.getElementById('photocard-preview-slot');
+            if (slot && mainSlot) slot.innerHTML = mainSlot.innerHTML;
+          }, 50);
+        }
+      }
+    };
+
+    window.wizardPrevStep = () => {
+      if (wizardCurrentStep > 1) {
+        wizardCurrentStep--;
+        renderWizardApp();
+      }
+    };
+
+    window.wizardSelectCategory = (catId) => {
+      store.setCategory(catId);
+      setTimeout(() => {
+        window.wizardNextStep();
+      }, 180);
+    };
+
+    window.wizardToggleSubject = (group, name) => {
+      store.toggleSubject(group, name);
+      renderWizardApp();
+    };
+
+    window.handleWizardCareerChange = (val) => {
+      store.updateProfile({ targetCareer: val.trim() });
+      store.matchTextbook(store.state.profile.careerCategory, val.trim());
+      store.updateAdvice(store.state.profile.careerCategoryId, val.trim());
+      store.notify();
+    };
+
+    // [9] App Bootstrapper
     window.addEventListener('DOMContentLoaded', () => {
       renderApp();
-      store.subscribe(renderApp);
+      renderWizardApp();
+      store.subscribe(() => {
+        renderApp();
+        renderWizardApp();
+      });
 
       document.getElementById('input-student-name').addEventListener('input', (e) => {
         store.updateProfile({ name: e.target.value });
@@ -1214,7 +1671,6 @@
         store.notify();
       });
 
-      // Open Photo Booth Button
       const openBoothBtn = document.getElementById('btn-open-booth');
       if (openBoothBtn) {
         openBoothBtn.addEventListener('click', () => window.openWebcamBooth());
@@ -1223,8 +1679,10 @@
       document.getElementById('btn-manual-reset').addEventListener('click', () => {
         if (confirm('새 학생을 위해 세션을 초기화하시겠습니까?')) {
           store.reset();
+          wizardCurrentStep = 1;
           document.getElementById('input-student-name').value = '';
           document.getElementById('input-target-career').value = '';
+          renderWizardApp();
         }
       });
 
@@ -1238,7 +1696,9 @@
         remaining -= 1;
         if (remaining <= 0) {
           store.reset();
+          wizardCurrentStep = 1;
           remaining = 180;
+          renderWizardApp();
         }
         const m = Math.floor(remaining / 60);
         const s = remaining % 60;
