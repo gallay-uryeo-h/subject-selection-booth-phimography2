@@ -1,0 +1,202 @@
+/**
+ * modules/m01-design/components.css
+ * 
+ * 영미권 명문대 리서치 페이퍼 / 모던 저널 느낌의 Academic Light 컴포넌트 스타일
+ */
+
+/* 기본 리셋 및 본문 타이포그래피 */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-surface);
+  color: var(--color-text-main);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 학술 헤더 */
+.academic-header {
+  background-color: var(--color-bg-base);
+  border-bottom: 1px solid var(--color-border-subtle);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: var(--shadow-sm);
+}
+
+.academic-title {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-oxford-navy);
+}
+
+.academic-subtitle {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* 카드 및 패널 */
+.academic-card {
+  background-color: var(--color-bg-base);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.academic-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-border-medium);
+  box-shadow: var(--shadow-md);
+}
+
+.academic-card.active {
+  border-color: var(--color-oxford-navy);
+  box-shadow: 0 0 0 1px var(--color-oxford-navy);
+  background-color: var(--color-oxford-navy-subtle);
+}
+
+/* 뱃지 */
+.academic-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.725rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.badge-suneung {
+  background-color: var(--color-antique-amber-subtle);
+  color: var(--color-antique-amber);
+  border: 1px solid rgba(217, 119, 6, 0.2);
+}
+
+.badge-career {
+  background-color: #E0F2FE;
+  color: #0369A1;
+  border: 1px solid rgba(3, 105, 161, 0.2);
+}
+
+.badge-fusion {
+  background-color: #F3E8FF;
+  color: #7E22CE;
+  border: 1px solid rgba(126, 34, 206, 0.2);
+}
+
+.badge-required {
+  background-color: #F1F5F9;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+}
+
+/* 버튼 */
+.academic-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.btn-primary {
+  background-color: var(--color-oxford-navy);
+  color: #FFFFFF;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-oxford-navy-hover);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border-color: var(--color-border-medium);
+  color: var(--color-text-secondary);
+}
+
+.btn-outline:hover {
+  border-color: var(--color-oxford-navy);
+  color: var(--color-oxford-navy);
+  background-color: var(--color-oxford-navy-subtle);
+}
+
+/* 형광펜 효과 */
+.highlight-text {
+  background-color: var(--color-highlighter-yellow);
+  padding: 0 3px;
+  border-radius: 2px;
+  mix-blend-mode: multiply;
+}
+
+/* 카드 선택 상태 */
+.curriculum-item-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-border-strong) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.curriculum-item-card.selected-card {
+  border-color: var(--color-oxford-navy) !important;
+  background-color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(11, 37, 69, 0.12) !important;
+}
+
+/* 페이드인 애니메이션 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 세션 상태 바 (M07 키오스크용) */
+.session-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.timer-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  background-color: var(--color-bg-surface-elevated);
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-subtle);
+}
+

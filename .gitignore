@@ -1,0 +1,18 @@
+# Large Textbook PDFs (Exceeds GitHub 100MB limit)
+*.pdf
+
+# Operating System Files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary / Scratch Files
+server.ps1
+inspect_pdf.ps1
+extract_streams.ps1
+*.tmp
+*.log
+
+# Environment
+.env
+.env.local
