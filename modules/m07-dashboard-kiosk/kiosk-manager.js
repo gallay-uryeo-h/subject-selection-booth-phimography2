@@ -1,19 +1,40 @@
 /**
  * modules/m07-dashboard-kiosk/kiosk-manager.js
  * 
- * 현장 키오스크 운영 최적화: 3분 자동 초기화 타이머 & 무음 로깅
+ * 현장 키오스크 운영 최적화:
+ * - 3분 자동 초기화 타이머 & 30초 전 경고 팝업
+ * - 학생별 선택 데이터 무음 익명 텔레메트리 로깅 (localStorage 기반)
+ * - 교사용 통계 대시보드 (/admin): 6대 계열 분포 차트, 3학년 과목별 수요 순위, CSV 엑셀 내보내기
  */
 
 import { roadmapStore } from '../../core/store.js';
 import { eventBus } from '../../core/event-bus.js';
 import { EVENTS } from '../../core/types.js';
 
+const STORAGE_KEY = 'UIRYEONG_BOOTH_TELEMETRY_LOGS';
+
 export class KioskManager {
   constructor(timeoutSeconds = 180) {
     this.timeoutSeconds = timeoutSeconds;
     this.remainingSeconds = timeoutSeconds;
     this.timerInterval = null;
-    this.analyticsLogs = [];
+    this.displayElement = null;
+    this.analyticsLogs = this.loadLogs();
+  }
+
+  loadLogs() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  saveLogs() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.analyticsLogs));
+    } catch (e) {}
   }
 
   /**
@@ -34,12 +55,12 @@ export class KioskManager {
       this.tick();
     }, 1000);
 
-    // 네컷 카드 생성 완료 시 익명 통계 자동 로깅
+    // 네컷 카드 생성 또는 학생 데이터 완성 시 익명 통계 자동 로깅
     eventBus.on(EVENTS.CARD_GENERATED, (cardData) => {
       this.logAnonymousSession(cardData);
     });
 
-    console.log('[Module 07] Kiosk session manager initialized (Timeout: 3min)');
+    console.log('[Module 07] Kiosk session manager & Telemetry initialized');
   }
 
   resetTimer() {
@@ -58,44 +79,115 @@ export class KioskManager {
 
     // 0초 도달 시 전체 세션 자동 리셋
     if (this.remainingSeconds <= 0) {
-      console.log('[KioskManager] ⏰ 3 minutes idle reached. Resetting session...');
-      roadmapStore.reset();
-      this.resetTimer();
-      eventBus.emit(EVENTS.SESSION_TIMEOUT_RESET, null);
+      this.handleTimeoutReset();
     }
   }
 
   updateDisplay() {
     if (!this.displayElement) return;
-    const mins = Math.floor(this.remainingSeconds / 60);
-    const secs = this.remainingSeconds % 60;
-    this.displayElement.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    const minutes = Math.floor(this.remainingSeconds / 60);
+    const seconds = this.remainingSeconds % 60;
+    this.displayElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  handleTimeoutReset() {
+    console.log('[Module 07] Session timeout - Auto resetting booth kiosk');
+    roadmapStore.reset();
+    eventBus.emit(EVENTS.SESSION_RESET);
+    this.resetTimer();
   }
 
   /**
-   * 개인정보를 제외한 진로/선택과목 데이터 무음 로깅 (교과협의회 분석용)
+   * 학생 선택 데이터 익명 로깅 (개인 식별 불가 마스킹)
    */
-  logAnonymousSession() {
+  logAnonymousSession(sessionData) {
     const state = roadmapStore.getState();
+    const rawName = state.profile.name || '무명';
+    const maskedName = rawName.length <= 1 ? rawName : rawName[0] + '*' + (rawName.length > 2 ? rawName.slice(2) : '');
+
     const logEntry = {
-      timestamp: new Date().toISOString(),
+      id: 'LOG_' + Date.now().toString(36),
+      timestamp: new Date().toLocaleTimeString('ko-KR', { hour12: false }),
+      maskedName: maskedName,
       careerCategory: state.profile.careerCategory,
-      year2Selection: state.curriculum.year2,
-      year3CareerSelection: state.curriculum.year3Career,
-      year3FusionSelection: state.curriculum.year3Fusion
+      careerCategoryId: state.profile.careerCategoryId,
+      targetCareer: state.profile.targetCareer || '진로 미정',
+      year3Subjects: [...state.curriculum.year3Career, ...state.curriculum.year3Fusion],
+      matchedTextbook: state.matchedTextbook?.textbook || '공통영어1',
+      hasPhoto: !!state.profile.photoDataUrl
     };
 
     this.analyticsLogs.push(logEntry);
-    console.log('[Analytics Logged]:', logEntry);
-    eventBus.emit(EVENTS.ANALYTICS_LOG_EVENT, logEntry);
+    this.saveLogs();
+    console.log('[Module 07] Anonymous telemetry logged:', logEntry);
+    return logEntry;
+  }
 
-    // localStorage에 누적
-    try {
-      const existing = JSON.parse(localStorage.getItem('uiryeong_eng_booth_logs') || '[]');
-      existing.push(logEntry);
-      localStorage.setItem('uiryeong_eng_booth_logs', JSON.stringify(existing));
-    } catch (e) {
-      // 쿼터 초과 방지
+  /**
+   * 교사용 통계 집계 데이터 반환
+   */
+  getStatistics() {
+    const totalCount = this.analyticsLogs.length;
+    const categoryCounts = {};
+    const subjectCounts = {};
+
+    this.analyticsLogs.forEach(log => {
+      // 계열 카운트
+      const cat = log.careerCategory || '미분류';
+      categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+
+      // 3학년 과목별 수요 카운트
+      if (Array.isArray(log.year3Subjects)) {
+        log.year3Subjects.forEach(sub => {
+          subjectCounts[sub] = (subjectCounts[sub] || 0) + 1;
+        });
+      }
+    });
+
+    return {
+      totalCount,
+      categoryCounts,
+      subjectCounts,
+      recentLogs: [...this.analyticsLogs].reverse().slice(0, 15)
+    };
+  }
+
+  /**
+   * 교과협의회 제출용 CSV 파일 즉시 다운로드
+   */
+  exportCSV() {
+    if (this.analyticsLogs.length === 0) {
+      alert('다운로드할 누적 학생 데이터가 없습니다.');
+      return;
+    }
+
+    const headers = ['로그ID', '기록시간', '학생식별', '진로계열', '목표세부진로', '선택한3학년과목', '매칭교과서', '사진촬영여부'];
+    const rows = this.analyticsLogs.map(l => [
+      l.id,
+      l.timestamp,
+      l.maskedName,
+      `"${l.careerCategory}"`,
+      `"${l.targetCareer}"`,
+      `"${(l.year3Subjects || []).join('; ')}"`,
+      `"${l.matchedTextbook}"`,
+      l.hasPhoto ? 'Y' : 'N'
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `의령여고_영어과_선택과목박람회_수요집계_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  clearLogs() {
+    if (confirm('모든 누적 학생 통계 데이터를 영구 삭제하시겠습니까?')) {
+      this.analyticsLogs = [];
+      localStorage.removeItem(STORAGE_KEY);
+      alert('통계 데이터가 초기화되었습니다.');
     }
   }
 }

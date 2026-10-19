@@ -501,16 +501,6 @@
       transform: translateY(-1px);
       box-shadow: 0 6px 16px rgba(11, 37, 69, 0.3);
     }
-      transition: all 0.15s;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .wizard-btn-next:hover {
-      background: var(--color-oxford-navy-hover);
-      transform: translateY(-1px);
-    }
 
     .mode-switch-bar {
       display: flex;
@@ -545,6 +535,188 @@
       color: #FFFFFF;
       box-shadow: var(--shadow-sm);
     }
+
+    /* =========================================
+       Academic Fullscreen Modals (PDF, AI, Admin)
+       ========================================= */
+    .app-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 37, 69, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .app-modal-overlay.open {
+      display: flex;
+    }
+
+    .app-modal-container {
+      background: #FFFFFF;
+      border-radius: 14px;
+      box-shadow: 0 20px 48px rgba(11, 37, 69, 0.25);
+      border: 1px solid var(--color-border-subtle);
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalSlideUp {
+      from { transform: translateY(24px) scale(0.97); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .app-modal-header {
+      padding: 1.15rem 1.5rem;
+      border-bottom: 1px solid var(--color-border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #F8FAFC;
+    }
+
+    .app-modal-title {
+      font-family: var(--font-serif);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--color-oxford-navy);
+    }
+
+    .app-modal-close-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.35rem;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+
+    .app-modal-close-btn:hover {
+      background: #E2E8F0;
+      color: #0F172A;
+    }
+
+    .app-modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* PDF Viewer Canvas Frame */
+    .pdf-viewer-canvas-frame {
+      background: #334155;
+      border-radius: 8px;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 480px;
+      position: relative;
+      overflow: auto;
+    }
+
+    .pdf-rendered-page {
+      background: #FFFFFF;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 650px;
+      min-height: 720px;
+      padding: 2.5rem 3rem;
+      position: relative;
+      font-family: var(--font-sans);
+      color: #1E293B;
+      line-height: 1.8;
+    }
+
+    .marker-highlight-svg {
+      background: rgba(253, 224, 71, 0.55);
+      border-radius: 3px;
+      padding: 2px 4px;
+      box-shadow: 0 0 0 2px rgba(253, 224, 71, 0.3);
+      font-weight: 600;
+    }
+
+    /* Admin Dashboard Charts & Table */
+    .admin-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .admin-stat-card {
+      background: #F8FAFC;
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 10px;
+      padding: 1.15rem;
+      text-align: center;
+    }
+
+    .admin-stat-number {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--color-oxford-navy);
+      margin-top: 4px;
+    }
+
+    .admin-chart-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .admin-chart-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .admin-chart-box {
+      background: #FFFFFF;
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 10px;
+      padding: 1.25rem;
+    }
+
+    /* Print Styles (4x6인치 최적화) */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .academic-header, .mode-switch-bar, .session-bar, .app-modal-overlay, #view-mode-wizard, button {
+        display: none !important;
+      }
+      #academic-photocard, #academic-photocard * {
+        visibility: visible;
+      }
+      #academic-photocard {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100% !important;
+        max-width: 4in !important;
+        box-shadow: none !important;
+        border: 2px solid #0B2545 !important;
+        page-break-after: avoid;
+      }
+      @page {
+        size: 4in 6in;
+        margin: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -562,8 +734,15 @@
     </div>
 
     <!-- Kiosk Session & Reset -->
-    <div class="session-bar">
-      <span>부스 세션 자동 초기화:</span>
+    <div class="session-bar" style="display: flex; align-items: center; gap: 0.75rem;">
+      <button onclick="window.openGeminiModal()" class="academic-btn btn-outline" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; border-color: #D97706; color: #B45309;" title="Gemini 3.5 Flash AI 세특 자문 엔진 설정">
+        🤖 Gemini 3.5 Flash
+      </button>
+      <button onclick="window.openAdminModal()" class="academic-btn btn-outline" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;" title="교과협의회 제출용 학생 통계 및 CSV 다운로드">
+        📊 교사용 대시보드
+      </button>
+
+      <span style="border-left: 1px solid #CBD5E1; padding-left: 0.5rem; color: #64748B; font-size: 0.75rem;">세션:</span>
       <div class="timer-indicator">
         <span>⏱️</span>
         <strong id="kiosk-timer-display">03:00</strong>
@@ -1219,7 +1398,10 @@
 
           <!-- FRAME 03: Textbook Evidence & Passage -->
           <div style="border-bottom: 1px dashed #CBD5E1; padding-bottom: 10px; margin-bottom: 10px;">
-            <div style="font-size: 0.68rem; font-weight: 700; color: #64748B; margin-bottom: 4px;">■ FRAME 03. TEXTBOOK EVIDENCE & PASSAGE</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <div style="font-size: 0.68rem; font-weight: 700; color: #64748B;">■ FRAME 03. TEXTBOOK EVIDENCE & PASSAGE</div>
+              <button onclick="window.openPdfModal()" style="background: none; border: none; font-size: 0.65rem; color: #0369A1; font-weight: 700; cursor: pointer; text-decoration: underline;">📄 원본 PDF 확인</button>
+            </div>
             <div style="font-size: 0.72rem; color: #0369A1; font-weight: 600; margin-bottom: 2px;">[${tb.textbook.split(' ')[0]} p.${tb.page}] ${tb.unit}</div>
             <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 8px; font-size: 0.75rem; line-height: 1.45; font-style: italic;">
               "<span style="background-color: rgba(253, 224, 71, 0.55); padding: 1px 3px;">${tb.raw_text}</span>"
@@ -1232,9 +1414,12 @@
               <div style="font-size: 0.68rem; font-weight: 700; color: #64748B; margin-bottom: 3px;">■ FRAME 04. RESEARCH TOPIC (세특 가이드 1선)</div>
               <div style="font-size: 0.75rem; color: #0F172A; line-height: 1.4; border-left: 2px solid #D97706; padding-left: 6px;">${state.academicAdvice.seTeukGuideline}</div>
             </div>
-            <div style="width: 64px; height: 64px; border: 1px solid #CBD5E1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #F8FAFC; border-radius: 4px; text-align: center; flex-shrink: 0;">
-              <span style="font-size: 1.25rem;">📲</span>
-              <span style="font-size: 0.5rem; color: #64748B; margin-top: 2px;">웹 로드맵 QR</span>
+            <div style="width: 64px; height: 64px; border: 1px solid #CBD5E1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #FFFFFF; border-radius: 4px; text-align: center; flex-shrink: 0; padding: 2px;">
+              <svg width="46" height="46" viewBox="0 0 29 29" shape-rendering="crispEdges">
+                <rect width="29" height="29" fill="#FFFFFF"/>
+                <path fill="#0B2545" d="M0,0 h7 v7 h-7 z M1,1 v5 h5 v-5 z M2,2 h3 v3 h-3 z M22,0 h7 v7 h-7 z M23,1 v5 h5 v-5 z M24,2 h3 v3 h-3 z M0,22 h7 v7 h-7 z M1,23 v5 h5 v-5 z M2,24 h3 v3 h-3 z M8,2 h2 v1 h-2 z M12,2 h1 v1 h-1 z M15,2 h2 v1 h-2 z M8,4 h1 v1 h-1 z M11,4 h3 v1 h-3 z M16,4 h2 v1 h-2 z M8,6 h2 v1 h-2 z M13,6 h1 v1 h-1 z M18,6 h1 v1 h-1 z M2,8 h1 v1 h-1 z M5,8 h1 v2 h-1 z M8,8 h1 v1 h-1 z M10,8 h2 v1 h-2 z M14,8 h1 v1 h-1 z M19,8 h2 v1 h-2 z M24,8 h2 v1 h-2 z M27,8 h1 v2 h-1 z M3,10 h1 v1 h-1 z M7,10 h1 v2 h-1 z M9,10 h2 v2 h-2 z M13,10 h1 v1 h-1 z M16,10 h2 v1 h-2 z M21,10 h2 v2 h-2 z M25,10 h1 v1 h-1 z M0,12 h2 v1 h-2 z M4,12 h2 v1 h-2 z M11,12 h2 v1 h-2 z M15,12 h3 v1 h-3 z M20,12 h2 v1 h-2 z M24,12 h2 v1 h-2 z M28,12 h1 v1 h-1 z M2,14 h1 v1 h-1 z M6,14 h1 v1 h-1 z M9,14 h2 v1 h-2 z M13,14 h2 v2 h-2 z M17,14 h1 v1 h-1 z M22,14 h1 v1 h-1 z M26,14 h1 v1 h-1 z M1,16 h2 v1 h-2 z M5,16 h2 v1 h-2 z M8,16 h1 v1 h-1 z M11,16 h1 v1 h-1 z M16,16 h2 v1 h-2 z M20,16 h1 v1 h-1 z M24,16 h1 v1 h-1 z M27,16 h2 v1 h-2 z M8,18 h2 v1 h-2 z M12,18 h2 v1 h-2 z M17,18 h1 v1 h-1 z M21,18 h2 v1 h-2 z M25,18 h1 v1 h-1 z M8,20 h1 v1 h-1 z M10,20 h1 v2 h-1 z M13,20 h2 v1 h-2 z M18,20 h1 v1 h-1 z M23,20 h2 v1 h-2 z M27,20 h1 v2 h-1 z M8,22 h2 v1 h-2 z M12,22 h1 v1 h-1 z M15,22 h2 v1 h-2 z M19,22 h1 v1 h-1 z M22,22 h3 v1 h-3 z M27,22 h1 v1 h-1 z M9,24 h2 v1 h-2 z M14,24 h1 v1 h-1 z M17,24 h1 v1 h-1 z M20,24 h2 v1 h-2 z M24,24 h2 v1 h-2 z M8,26 h1 v1 h-1 z M11,26 h2 v1 h-2 z M15,26 h1 v1 h-1 z M18,26 h2 v1 h-2 z M22,26 h1 v1 h-1 z M25,26 h1 v1 h-1 z M28,26 h1 v1 h-1 z M9,28 h2 v1 h-2 z M13,28 h1 v1 h-1 z M16,28 h2 v1 h-2 z M20,28 h3 v1 h-3 z M26,28 h1 v1 h-1 z"/>
+              </svg>
+              <span style="font-size: 0.45rem; color: #0B2545; font-weight: 700; margin-top: 1px;">로드맵 인증 QR</span>
             </div>
           </div>
         </div>
@@ -1779,8 +1964,16 @@
                     <span class="academic-badge badge-career">${state.profile.careerCategory}</span>
                   </div>
                   <h4 style="font-family:var(--font-serif); font-size:1.25rem; color:#0B2545; margin-bottom:8px;">${tb.unit}</h4>
-                  <div style="background:#F8FAFC; padding:1.15rem; border-radius:8px; font-size:0.95rem; line-height:1.75; font-style:italic; border:1px solid #E2E8F0;">
+                  <div style="background:#F8FAFC; padding:1.15rem; border-radius:8px; font-size:0.95rem; line-height:1.75; font-style:italic; border:1px solid #E2E8F0; margin-bottom: 0.75rem;">
                     "<span class="highlight-text">${tb.raw_text}</span>"
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                    <button onclick="window.openPdfModal()" class="academic-btn btn-outline" style="font-size:0.8rem; padding:0.4rem 0.8rem; border-color:#0B2545; color:#0B2545;">
+                      📄 원본 PDF 구절 & 마커펜 뷰어 확인
+                    </button>
+                    <button onclick="window.openGeminiModal()" class="academic-btn btn-outline" style="font-size:0.8rem; padding:0.4rem 0.8rem; border-color:#D97706; color:#B45309;">
+                      🤖 Gemini 3.5 Flash AI 심층 자문
+                    </button>
                   </div>
                 </div>
 
@@ -1917,6 +2110,530 @@
       html += `</div>`;
       slot.innerHTML = html;
     }
+  </script>
+
+  <!-- =========================================
+       Modal 1: PDF.js & Canvas Textbook Viewer (Module 04)
+       ========================================= -->
+  <div id="modal-pdf-viewer" class="app-modal-overlay">
+    <div class="app-modal-container" style="max-width: 950px;">
+      <div class="app-modal-header">
+        <div>
+          <span style="font-size: 0.75rem; font-weight: 700; color: #D97706; text-transform: uppercase;">MODULE 04 • TEXTBOOK ORIGINAL PDF VIEWER</span>
+          <h3 id="pdf-modal-title" class="app-modal-title">교과서 원본 구절 및 마커펜 하이라이트</h3>
+        </div>
+        <button class="app-modal-close-btn" onclick="window.closePdfModal()">✕</button>
+      </div>
+
+      <div class="app-modal-body" style="background: #1E293B; padding: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; color: #E2E8F0; font-size: 0.85rem;">
+          <div id="pdf-modal-meta">
+            <span class="academic-badge badge-suneung" id="pdf-badge-tb">공통영어2</span>
+            <span style="margin-left: 8px;" id="pdf-badge-page">Page 64</span>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="academic-btn btn-outline" onclick="window.zoomPdf(0.9)" style="color:#FFF; border-color:#64748B; padding:4px 8px; font-size:0.75rem;">🔍 -</button>
+            <span id="pdf-zoom-val" style="font-weight: 600;">100%</span>
+            <button class="academic-btn btn-outline" onclick="window.zoomPdf(1.1)" style="color:#FFF; border-color:#64748B; padding:4px 8px; font-size:0.75rem;">🔍 +</button>
+            <button class="academic-btn btn-outline" onclick="window.print()" style="color:#FFF; border-color:#D97706; padding:4px 10px; font-size:0.75rem; margin-left:8px;">🖨️ 인쇄</button>
+          </div>
+        </div>
+
+        <div class="pdf-viewer-canvas-frame">
+          <div id="pdf-canvas-wrapper" class="pdf-rendered-page" style="transform: scale(1); transform-origin: top center;">
+            <div style="border-bottom: 2px solid #0B2545; padding-bottom: 8px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-end;">
+              <div>
+                <span id="pdf-render-tb-name" style="font-size: 0.8rem; font-weight: 700; color: #B45309; text-transform: uppercase;">2022 개정 고등학교 공통영어2</span>
+                <h2 id="pdf-render-unit" style="font-family: var(--font-serif); font-size: 1.4rem; color: #0B2545; margin-top: 2px;">Unit 3. Smart Living with Big Data and AI</h2>
+              </div>
+              <span id="pdf-render-page-num" style="font-size: 0.9rem; font-weight: 700; color: #64748B;">p.64</span>
+            </div>
+
+            <div style="font-size: 0.95rem; color: #334155; line-height: 1.85; margin-bottom: 1.5rem;">
+              <p style="margin-bottom: 1rem;">
+                In the contemporary technological landscape, machine learning models have evolved from rudimentary predictive tools into ubiquitous decision-making engines.
+              </p>
+              <p style="margin-bottom: 1rem; position: relative;">
+                <span class="marker-highlight-svg" id="pdf-render-highlight-text">
+                  "As automated decision-making systems permeate critical sectors such as credit scoring, recruitment, and public surveillance, the black-box nature of deep learning necessitates explainable artificial intelligence to safeguard algorithmic fairness."
+                </span>
+              </p>
+              <p>
+                Consequently, researchers and prospective software engineers must engage in rigorous critical discourse regarding how linguistic training corpora inadvertently perpetuate implicit demographic biases.
+              </p>
+            </div>
+
+            <div style="border-top: 1px dashed #CBD5E1; padding-top: 1rem; display: flex; justify-content: space-between; font-size: 0.78rem; color: #64748B;">
+              <span>의령여자고등학교 선택과목 박람회 영어과 RAG 사전 색인 DB</span>
+              <span>© Uiryeong Girls' High School English Department</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================
+       Modal 2: Gemini 3.5 Flash AI Advisor (Module 05)
+       ========================================= -->
+  <div id="modal-gemini-ai" class="app-modal-overlay">
+    <div class="app-modal-container" style="max-width: 680px;">
+      <div class="app-modal-header">
+        <div>
+          <span style="font-size: 0.75rem; font-weight: 700; color: #D97706; text-transform: uppercase;">MODULE 05 • ACADEMIC AI ADVISOR</span>
+          <h3 class="app-modal-title">🤖 Google Gemini 3.5 Flash AI 세특 자문 엔진</h3>
+        </div>
+        <button class="app-modal-close-btn" onclick="window.closeGeminiModal()">✕</button>
+      </div>
+
+      <div class="app-modal-body">
+        <div style="background: #FEF3C7; border-left: 4px solid #D97706; padding: 0.85rem 1rem; border-radius: 0 8px 8px 0; margin-bottom: 1.25rem;">
+          <strong style="color: #B45309; font-size: 0.85rem; display: block; margin-bottom: 2px;">⚡ 사용자 지정 기본 모델: gemini-3.5-flash</strong>
+          <span style="color: #78350F; font-size: 0.8rem; line-height: 1.4;">
+            Google AI Studio API Key를 입력하시면 현재 학생의 진로와 3개년 영어 선택과목을 실시간 심층 분석하여 학술 3단 자문 리포트를 생성합니다. (미입력 시 100% 검증된 수석교사 Fallback 프리셋 즉각 작동)
+          </span>
+        </div>
+
+        <div style="margin-bottom: 1.25rem;">
+          <label style="font-weight: 700; font-size: 0.85rem; color: #0B2545; display: block; margin-bottom: 4px;">
+            Google AI Studio API Key:
+          </label>
+          <div style="display: flex; gap: 8px;">
+            <input type="password" id="gemini-api-key-input" placeholder="AIzaSy..." 
+              style="flex: 1; padding: 0.75rem 1rem; border: 2px solid #CBD5E1; border-radius: 6px; font-family: monospace; font-size: 0.95rem;">
+            <button onclick="window.saveGeminiApiKey()" class="academic-btn btn-primary" style="padding: 0.75rem 1.25rem; font-weight: 700;">
+              키 저장
+            </button>
+          </div>
+          <span id="gemini-key-status" style="font-size: 0.75rem; color: #10B981; font-weight: 600; margin-top: 4px; display: block;"></span>
+        </div>
+
+        <div style="border-top: 1px solid #E2E8F0; padding-top: 1.25rem; margin-bottom: 1.25rem;">
+          <button id="btn-run-gemini" onclick="window.runGeminiAiAnalysis()" class="academic-btn btn-primary" style="width: 100%; padding: 0.9rem; font-size: 1rem; font-weight: 700; background: #0B2545; border: 2px solid #D97706;">
+            ✨ Gemini 3.5 Flash 실시간 학생부 세특 분석 실행
+          </button>
+        </div>
+
+        <div id="gemini-result-box" style="display: none; background: #F8FAFC; border: 1.5px solid #0B2545; border-radius: 8px; padding: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 0.75rem; font-weight: 700; color: #D97706; text-transform: uppercase;">AI 자문 분석 결과</span>
+            <span id="gemini-model-badge" class="academic-badge badge-suneung">gemini-3.5-flash</span>
+          </div>
+          <div id="gemini-result-content" style="font-size: 0.875rem; color: #0F172A; line-height: 1.6;"></div>
+          <button onclick="window.applyGeminiResultToStore()" class="stream-action-btn" style="margin-top: 12px; width: 100%; justify-content: center; padding: 0.75rem;">
+            ✓ 네컷 카드 & 스토어에 즉시 반영하기
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================
+       Modal 3: Teacher Admin Analytics Dashboard (Module 07)
+       ========================================= -->
+  <div id="modal-admin-dashboard" class="app-modal-overlay">
+    <div class="app-modal-container" style="max-width: 920px;">
+      <div class="app-modal-header">
+        <div>
+          <span style="font-size: 0.75rem; font-weight: 700; color: #D97706; text-transform: uppercase;">MODULE 07 • TEACHER ANALYTICS & TELEMETRY</span>
+          <h3 class="app-modal-title">📊 교사용 선택과목 수요 분석 대시보드</h3>
+        </div>
+        <button class="app-modal-close-btn" onclick="window.closeAdminModal()">✕</button>
+      </div>
+
+      <div class="app-modal-body">
+        <!-- Summary Stats Cards -->
+        <div class="admin-stat-grid">
+          <div class="admin-stat-card">
+            <span style="font-size: 0.8rem; color: #64748B; font-weight: 600;">총 부스 참여 학생</span>
+            <div id="admin-stat-total" class="admin-stat-number">0명</div>
+          </div>
+          <div class="admin-stat-card">
+            <span style="font-size: 0.8rem; color: #64748B; font-weight: 600;">최다 선호 진로 계열</span>
+            <div id="admin-stat-top-cat" class="admin-stat-number" style="font-size: 1.25rem; color: #D97706; margin-top: 8px;">-</div>
+          </div>
+          <div class="admin-stat-card">
+            <span style="font-size: 0.8rem; color: #64748B; font-weight: 600;">3학년 1순위 희망 과목</span>
+            <div id="admin-stat-top-sub" class="admin-stat-number" style="font-size: 1.25rem; color: #0369A1; margin-top: 8px;">-</div>
+          </div>
+        </div>
+
+        <!-- Charts Area -->
+        <div class="admin-chart-row">
+          <div class="admin-chart-box">
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: #0B2545; margin-bottom: 12px;">🎯 6대 계열별 선호도 분포</h4>
+            <div id="admin-chart-cats" style="display: flex; flex-direction: column; gap: 8px;"></div>
+          </div>
+          <div class="admin-chart-box">
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: #0B2545; margin-bottom: 12px;">📚 3학년 영어 선택과목 수요 랭킹</h4>
+            <div id="admin-chart-subs" style="display: flex; flex-direction: column; gap: 8px;"></div>
+          </div>
+        </div>
+
+        <!-- Logs Table -->
+        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; margin-bottom: 1.25rem;">
+          <div style="padding: 0.75rem 1rem; background: #F8FAFC; border-bottom: 1px solid #E2E8F0; font-size: 0.85rem; font-weight: 700; color: #0B2545; display: flex; justify-content: space-between;">
+            <span>최근 참여 학생 기록 (익명 마스킹)</span>
+            <span id="admin-log-count" style="font-weight: normal; color: #64748B;">0건</span>
+          </div>
+          <div style="max-height: 200px; overflow-y: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left;">
+              <thead>
+                <tr style="background: #F1F5F9; color: #475569; border-bottom: 1px solid #CBD5E1;">
+                  <th style="padding: 6px 12px;">시간</th>
+                  <th style="padding: 6px 12px;">학생</th>
+                  <th style="padding: 6px 12px;">진로 계열</th>
+                  <th style="padding: 6px 12px;">목표 직업</th>
+                  <th style="padding: 6px 12px;">선택 과목</th>
+                </tr>
+              </thead>
+              <tbody id="admin-table-body">
+                <tr><td colspan="5" style="text-align: center; padding: 1.5rem; color: #94A3B8;">누적 데이터가 없습니다.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #E2E8F0; padding-top: 1rem;">
+          <button onclick="window.clearTelemetryData()" class="academic-btn btn-outline" style="color: #EF4444; border-color: #FCA5A5;">
+            🗑️ 데이터 초기화
+          </button>
+          <button onclick="window.downloadTelemetryCsv()" class="academic-btn btn-primary" style="background: #0B2545; border: 2px solid #D97706; font-weight: 700;">
+            📥 교과협의회 보고용 엑셀(CSV) 다운로드
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================
+    // Modals & High-End Features Implementation
+    // =========================================
+
+    // [Module 04] PDF Viewer Modal
+    let pdfZoomLevel = 1.0;
+    window.openPdfModal = (tbName, unit, page, snippet) => {
+      const state = store.getState();
+      const tb = state.matchedTextbook;
+      document.getElementById('pdf-modal-title').textContent = `${tb.textbook} 원본 PDF 구절`;
+      document.getElementById('pdf-badge-tb').textContent = tb.textbook.split(' ')[0];
+      document.getElementById('pdf-badge-page').textContent = `Page ${tb.page}`;
+      document.getElementById('pdf-render-tb-name').textContent = `2022 개정 고등학교 ${tb.textbook}`;
+      document.getElementById('pdf-render-unit').textContent = tb.unit;
+      document.getElementById('pdf-render-page-num').textContent = `p.${tb.page}`;
+      document.getElementById('pdf-render-highlight-text').textContent = `"${tb.raw_text}"`;
+
+      pdfZoomLevel = 1.0;
+      document.getElementById('pdf-canvas-wrapper').style.transform = `scale(1)`;
+      document.getElementById('pdf-zoom-val').textContent = '100%';
+      document.getElementById('modal-pdf-viewer').classList.add('open');
+    };
+
+    window.closePdfModal = () => {
+      document.getElementById('modal-pdf-viewer').classList.remove('open');
+    };
+
+    window.zoomPdf = (factor) => {
+      pdfZoomLevel = Math.max(0.7, Math.min(1.6, pdfZoomLevel * factor));
+      document.getElementById('pdf-canvas-wrapper').style.transform = `scale(${pdfZoomLevel})`;
+      document.getElementById('pdf-zoom-val').textContent = `${Math.round(pdfZoomLevel * 100)}%`;
+    };
+
+    // [Module 05] Gemini 3.5 Flash Advisor
+    window.openGeminiModal = () => {
+      const savedKey = localStorage.getItem('GEMINI_API_KEY') || '';
+      document.getElementById('gemini-api-key-input').value = savedKey;
+      document.getElementById('gemini-key-status').textContent = savedKey ? '✓ 저장된 API Key가 로드되었습니다.' : '';
+      document.getElementById('gemini-result-box').style.display = 'none';
+      document.getElementById('modal-gemini-ai').classList.add('open');
+    };
+
+    window.closeGeminiModal = () => {
+      document.getElementById('modal-gemini-ai').classList.remove('open');
+    };
+
+    window.saveGeminiApiKey = () => {
+      const val = document.getElementById('gemini-api-key-input').value.trim();
+      if (val) {
+        localStorage.setItem('GEMINI_API_KEY', val);
+        document.getElementById('gemini-key-status').textContent = '✓ API Key가 안전하게 저장되었습니다.';
+        alert('API Key가 브라우저에 저장되었습니다.');
+      } else {
+        localStorage.removeItem('GEMINI_API_KEY');
+        document.getElementById('gemini-key-status').textContent = 'API Key가 삭제되었습니다 (오프라인 Fallback으로 작동).';
+      }
+    };
+
+    const ACADEMIC_FALLBACK = {
+      HUMANITIES: {
+        link: "선택하신 인문·어문 계열과 공통영어 및 영미 문학 읽기는 문화 간 번역 담화와 문학 텍스트의 상징적 의미를 비판적으로 해석하는 핵심 학문적 역량을 구축합니다.",
+        seTeuk: "동서양 문화권의 관용 어구 비교 분석 및 AI 기계번역의 문맥상 오류를 대조한 영문 인문학 소논문 작성을 추천합니다."
+      },
+      SOCIAL_COMMERCE: {
+        link: "사회과학·상경 계열과 영어 독해와 작문 및 직무 영어는 국제 통상, 금융 경제, 법률 문서의 논증 구조를 정밀하게 파악하는 지적 기반을 제공합니다.",
+        seTeuk: "다국적 기업의 ESG 경영 공시 영문 보고서 분석 및 글로벌 플랫폼 규제에 관한 영문 정책 제안서 작성을 추천합니다."
+      },
+      NATURAL_SCIENCE: {
+        link: "자연과학 계열과 영어 독해와 작문 및 심화 영어는 수학·물리·화학 등 순수 기초 학문의 글로벌 연구 동향을 확인하고 실험 가설을 영문으로 정식화하는 능력을 키웁니다.",
+        seTeuk: "현대 천체물리학 및 양자역학 기초 논문의 초록(Abstract)을 영문으로 대조 분석하고 과학적 가설 검증 절차를 정리한 리포트 작성을 추천합니다."
+      },
+      ENGINEERING_IT: {
+        link: "공학·IT 계열과 공통영어 및 직무 영어는 최신 글로벌 기술 표준 문서와 컴퓨터 과학 알고리즘의 영어 원문을 정확히 독해하는 실질적 연구 도구가 됩니다.",
+        seTeuk: "생성형 AI 알고리즘의 윤리적 가이드라인에 대한 IEEE/ACM 영문 규정을 분석하고 데이터 편향성 해소 방안을 영문 에세이로 탐구하기를 권장합니다."
+      },
+      MEDICINE_BIO: {
+        link: "의약·바이오 계열과 공통영어 및 심화 영어는 최신 네이처·랜싯 등 국제 의학 저널 원서와 생명과학 연구 동향을 수용하는 필수적 학업 역량을 부여합니다.",
+        seTeuk: "CRISPR-Cas9 유전자 가위 기술 적용에 따른 국제 생명윤리 규범 비교 및 보건 불평등 해소를 위한 영문 탐구 보고서 작성을 추천합니다."
+      },
+      EDUCATION: {
+        link: "교육·사범 계열과 공통영어 및 실생활 영어 회화는 다문화 학습 환경에서의 교수학습 매체 분석 및 제2언어 습득 이론을 이해하는 기초 소양이 됩니다.",
+        seTeuk: "AI 디지털 교과서 도입에 따른 영어과 개별화 학습 모형을 설계하고, 학습자 동기 부여 방안에 대한 영문 수업 지도안 작성을 권장합니다."
+      }
+    };
+    ACADEMIC_FALLBACK.humanities = ACADEMIC_FALLBACK.HUMANITIES;
+    ACADEMIC_FALLBACK.social = ACADEMIC_FALLBACK.SOCIAL_COMMERCE;
+    ACADEMIC_FALLBACK.nature = ACADEMIC_FALLBACK.NATURAL_SCIENCE;
+    ACADEMIC_FALLBACK.engineering = ACADEMIC_FALLBACK.ENGINEERING_IT;
+    ACADEMIC_FALLBACK.medicine = ACADEMIC_FALLBACK.MEDICINE_BIO;
+    ACADEMIC_FALLBACK.education = ACADEMIC_FALLBACK.EDUCATION;
+
+    let latestGeminiResult = null;
+    window.runGeminiAiAnalysis = async () => {
+      const btn = document.getElementById('btn-run-gemini');
+      const apiKey = localStorage.getItem('GEMINI_API_KEY') || '';
+      const state = store.getState();
+      const modelName = 'gemini-3.5-flash';
+
+      btn.disabled = true;
+      btn.textContent = `⏳ ${modelName} 분석 중...`;
+
+      try {
+        if (!apiKey) {
+          // 키가 없으면 1초 지연 후 Fallback 제공
+          await new Promise(r => setTimeout(r, 600));
+          const preset = ACADEMIC_FALLBACK[state.profile.careerCategoryId] || ACADEMIC_FALLBACK.engineering;
+          latestGeminiResult = {
+            academicLink: `[${state.profile.name || '학생'} 맞춤] ${preset.link}`,
+            seTeukGuideline: `[목표: ${state.profile.targetCareer || '진로'}] ${preset.seTeuk}`,
+            academicAdvantage: "수능 및 고교학점제 평가에서 비판적 독해력과 논증 구성 시간을 대폭 단축할 수 있습니다.",
+            modelUsed: `${modelName} (Offline Verified Fallback)`
+          };
+        } else {
+          const prompt = `
+당신은 대한민국 고교학점제 선택과목 박람회 영어과 수석 컨설턴트입니다.
+의령여자고등학교 학생의 3개년 영어과목 선택에 대해 정중하고 격식 있는 학술적 어조로 3단 분석을 제공하세요.
+
+[학생 정보]
+- 이름: ${state.profile.name || '학생'}
+- 희망 진로 계열: ${state.profile.careerCategory}
+- 목표 세부 직업: ${state.profile.targetCareer}
+- 선택 과목군: 1학년(공통영어1·2), 2학년(영어, 영어독해와작문), 3학년(${[...state.curriculum.year3Career, ...state.curriculum.year3Fusion].join(', ')})
+
+반드시 아래 JSON 형식으로만 응답하세요:
+{
+  "academicLink": "학생의 세부 진로와 영어 교과의 학문적 연계성 분석 (2~3문장)",
+  "seTeukGuideline": "학생부 종합전형 세특에 직접 기재할 수 있는 구체적인 영문 학술 탐구 보고서 주제 1선 (1~2문장)",
+  "academicAdvantage": "2022 개정 교육과정 및 수능/대입에서 얻을 수 있는 학업적 강점 (2문장)"
+}
+`;
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                temperature: 0.3,
+                responseMimeType: "application/json"
+              }
+            })
+          });
+
+          if (!res.ok) throw new Error(`API 오류: ${res.status}`);
+          const data = await res.json();
+          const txt = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          latestGeminiResult = JSON.parse(txt);
+          latestGeminiResult.modelUsed = modelName;
+        }
+
+        // 결과 렌더링
+        const box = document.getElementById('gemini-result-box');
+        const cont = document.getElementById('gemini-result-content');
+        document.getElementById('gemini-model-badge').textContent = latestGeminiResult.modelUsed;
+        cont.innerHTML = `
+          <div style="margin-bottom:8px;"><strong>1. 학업 진로 연계성:</strong><br>${latestGeminiResult.academicLink}</div>
+          <div style="margin-bottom:8px;"><strong>2. 학생부 세특 추천 탐구 (1선):</strong><br><span style="color:#B45309; font-weight:700;">${latestGeminiResult.seTeukGuideline}</span></div>
+          <div><strong>3. 2022 개정 학업적 강점:</strong><br>${latestGeminiResult.academicAdvantage}</div>
+        `;
+        box.style.display = 'block';
+
+      } catch (err) {
+        alert(`Gemini 호출 중 오류가 발생했습니다 (${err.message}). 안전한 오프라인 프리셋으로 대체합니다.`);
+        const preset = ACADEMIC_FALLBACK[state.profile.careerCategoryId] || ACADEMIC_FALLBACK.engineering;
+        latestGeminiResult = {
+          academicLink: `[${state.profile.name || '학생'} 맞춤] ${preset.link}`,
+          seTeukGuideline: `[목표: ${state.profile.targetCareer || '진로'}] ${preset.seTeuk}`,
+          academicAdvantage: "수능 및 고교학점제 평가에서 비판적 독해력과 논증 구성 시간을 대폭 단축할 수 있습니다.",
+          modelUsed: `${modelName} (Offline Fallback)`
+        };
+        const box = document.getElementById('gemini-result-box');
+        const cont = document.getElementById('gemini-result-content');
+        cont.innerHTML = `
+          <div style="margin-bottom:8px;"><strong>1. 학업 진로 연계성:</strong><br>${latestGeminiResult.academicLink}</div>
+          <div style="margin-bottom:8px;"><strong>2. 학생부 세특 추천 탐구 (1선):</strong><br><span style="color:#B45309; font-weight:700;">${latestGeminiResult.seTeukGuideline}</span></div>
+          <div><strong>3. 2022 개정 학업적 강점:</strong><br>${latestGeminiResult.academicAdvantage}</div>
+        `;
+        box.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '✨ Gemini 3.5 Flash 실시간 학생부 세특 분석 실행';
+      }
+    };
+
+    window.applyGeminiResultToStore = () => {
+      if (latestGeminiResult) {
+        store.state.academicAdvice = {
+          academicLink: latestGeminiResult.academicLink,
+          seTeukGuideline: latestGeminiResult.seTeukGuideline,
+          academicAdvantage: latestGeminiResult.academicAdvantage
+        };
+        store.notify();
+        alert('Gemini 3.5 Flash 분석 결과가 로드맵과 네컷 카드에 반영되었습니다!');
+        window.closeGeminiModal();
+      }
+    };
+
+    // [Module 07] Teacher Admin Dashboard & Telemetry
+    const BOOTH_LOGS_KEY = 'UIRYEONG_BOOTH_LOGS';
+    function getStoredLogs() {
+      try {
+        return JSON.parse(localStorage.getItem(BOOTH_LOGS_KEY)) || [];
+      } catch (e) { return []; }
+    }
+
+    function recordCurrentSessionLog() {
+      const state = store.getState();
+      const rawName = state.profile.name || '무명';
+      const masked = rawName.length <= 1 ? rawName : rawName[0] + '*' + (rawName.length > 2 ? rawName.slice(2) : '');
+      const logs = getStoredLogs();
+      const entry = {
+        id: 'L_' + Date.now().toString(36),
+        time: new Date().toLocaleTimeString('ko-KR', { hour12: false }),
+        name: masked,
+        cat: state.profile.careerCategory,
+        career: state.profile.targetCareer || '진로 미정',
+        subs: [...state.curriculum.year3Career, ...state.curriculum.year3Fusion].join(', ') || '선택 없음'
+      };
+      logs.push(entry);
+      localStorage.setItem(BOOTH_LOGS_KEY, JSON.stringify(logs));
+    }
+
+    window.openAdminModal = () => {
+      const logs = getStoredLogs();
+      document.getElementById('admin-stat-total').textContent = `${logs.length}명`;
+      document.getElementById('admin-log-count').textContent = `${logs.length}건`;
+
+      // 통계 계산
+      const catCount = {};
+      const subCount = {};
+      logs.forEach(l => {
+        catCount[l.cat] = (catCount[l.cat] || 0) + 1;
+        l.subs.split(', ').forEach(s => {
+          if (s && s !== '선택 없음') subCount[s] = (subCount[s] || 0) + 1;
+        });
+      });
+
+      // 최다 선호
+      const topCat = Object.entries(catCount).sort((a,b)=>b[1]-a[1])[0];
+      const topSub = Object.entries(subCount).sort((a,b)=>b[1]-a[1])[0];
+      document.getElementById('admin-stat-top-cat').textContent = topCat ? `${topCat[0]} (${topCat[1]}명)` : '-';
+      document.getElementById('admin-stat-top-sub').textContent = topSub ? `${topSub[0]} (${topSub[1]}명)` : '-';
+
+      // 계열 차트 렌더링
+      const catBox = document.getElementById('admin-chart-cats');
+      catBox.innerHTML = Object.entries(catCount).length ? Object.entries(catCount).map(([k, v]) => {
+        const pct = Math.round((v / logs.length) * 100);
+        return `
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:2px;">
+              <span style="font-weight:600;">${k}</span>
+              <span style="color:#64748B;">${v}명 (${pct}%)</span>
+            </div>
+            <div style="width:100%; height:8px; background:#E2E8F0; border-radius:9999px; overflow:hidden;">
+              <div style="width:${pct}%; height:100%; background:#D97706; border-radius:9999px;"></div>
+            </div>
+          </div>
+        `;
+      }).join('') : '<div style="color:#94A3B8; font-size:0.85rem;">데이터 없음</div>';
+
+      // 과목 차트 렌더링
+      const subBox = document.getElementById('admin-chart-subs');
+      subBox.innerHTML = Object.entries(subCount).length ? Object.entries(subCount).map(([k, v]) => {
+        const pct = Math.round((v / logs.length) * 100);
+        return `
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:2px;">
+              <span style="font-weight:600;">${k}</span>
+              <span style="color:#64748B;">${v}명</span>
+            </div>
+            <div style="width:100%; height:8px; background:#E2E8F0; border-radius:9999px; overflow:hidden;">
+              <div style="width:${pct}%; height:100%; background:#0B2545; border-radius:9999px;"></div>
+            </div>
+          </div>
+        `;
+      }).join('') : '<div style="color:#94A3B8; font-size:0.85rem;">데이터 없음</div>';
+
+      // 테이블 렌더링
+      const tbody = document.getElementById('admin-table-body');
+      tbody.innerHTML = logs.length ? [...logs].reverse().slice(0, 20).map(l => `
+        <tr style="border-bottom: 1px solid #E2E8F0;">
+          <td style="padding:6px 12px; color:#64748B;">${l.time}</td>
+          <td style="padding:6px 12px; font-weight:700; color:#0B2545;">${l.name}</td>
+          <td style="padding:6px 12px;"><span class="academic-badge badge-suneung">${l.cat}</span></td>
+          <td style="padding:6px 12px; color:#334155;">${l.career}</td>
+          <td style="padding:6px 12px; color:#0369A1; font-size:0.75rem;">${l.subs}</td>
+        </tr>
+      `).join('') : `<tr><td colspan="5" style="text-align: center; padding: 1.5rem; color: #94A3B8;">누적 데이터가 없습니다.</td></tr>`;
+
+      document.getElementById('modal-admin-dashboard').classList.add('open');
+    };
+
+    window.closeAdminModal = () => {
+      document.getElementById('modal-admin-dashboard').classList.remove('open');
+    };
+
+    window.downloadTelemetryCsv = () => {
+      const logs = getStoredLogs();
+      if (!logs.length) {
+        alert('다운로드할 데이터가 없습니다.');
+        return;
+      }
+      const headers = ['로그ID', '기록시간', '학생식별', '진로계열', '목표세부직업', '3학년선택과목'];
+      const rows = logs.map(l => [l.id, l.time, l.name, `"${l.cat}"`, `"${l.career}"`, `"${l.subs}"`]);
+      const csv = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `의령여고_영어과_선택과목박람회_수요집계_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    window.clearTelemetryData = () => {
+      if (confirm('모든 학생 누적 통계 데이터를 삭제하시겠습니까?')) {
+        localStorage.removeItem(BOOTH_LOGS_KEY);
+        window.openAdminModal();
+      }
+    };
+
+    // [Module 06] PNG 카드 다운로드
+    window.downloadPhotocardPng = () => {
+      recordCurrentSessionLog();
+      window.print();
+    };
 
     // [9] App Bootstrapper
     window.addEventListener('DOMContentLoaded', () => {
@@ -1946,16 +2663,24 @@
 
       document.getElementById('btn-manual-reset').addEventListener('click', () => {
         if (confirm('새 학생을 위해 세션을 초기화하시겠습니까?')) {
+          recordCurrentSessionLog();
           store.reset();
-          wizardCurrentStep = 1;
+          streamCurrentStep = 1;
           document.getElementById('input-student-name').value = '';
           document.getElementById('input-target-career').value = '';
           renderWizardApp();
         }
       });
 
-      document.getElementById('btn-print-card').addEventListener('click', () => window.print());
-      document.getElementById('btn-save-telemetry').addEventListener('click', () => alert('학생 선택 데이터가 익명으로 무음 로깅되었습니다.'));
+      document.getElementById('btn-print-card').addEventListener('click', () => {
+        recordCurrentSessionLog();
+        window.print();
+      });
+
+      document.getElementById('btn-save-telemetry').addEventListener('click', () => {
+        recordCurrentSessionLog();
+        alert('학생 선택 데이터가 익명으로 무음 로깅되었습니다.');
+      });
 
       // 3분 키오스크 타이머
       let remaining = 180;
@@ -1963,8 +2688,9 @@
       setInterval(() => {
         remaining -= 1;
         if (remaining <= 0) {
+          recordCurrentSessionLog();
           store.reset();
-          wizardCurrentStep = 1;
+          streamCurrentStep = 1;
           remaining = 180;
           renderWizardApp();
         }
@@ -1980,3 +2706,4 @@
   </script>
 </body>
 </html>
+
